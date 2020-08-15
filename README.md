@@ -29,7 +29,7 @@ See "lbfgs_sample.cpp" for details.
 
 - A better scheme for some special problems than [LBFGS-B](https://doi.org/10.1145/279232.279236) (TOMS778).
 
-- Although More-Thuente line search is already good enough, we plan to compare it with [Hager-Zhang line search](https://doi.org/10.1137/030601880) and [Nocedal's zoom line search](https://link.springer.com/book/10.1007%2F978-0-387-40065-5). Hager-Zhang's method is reported to be full machine accuracy while More-Thuente's method can only attain the half. Nocedal's zoom is also reported to be reliable. We will compare them and choose the best one if the improvement is good enough.
+- Although More-Thuente line search is already good enough, we plan to compare it with [Hager-Zhang line search](https://doi.org/10.1137/030601880) and [Nocedal's zoom line search](https://link.springer.com/book/10.1007%2F978-0-387-40065-5). Hager-Zhang linear search is reported to be full machine accuracy while More-Thuente's method can only attain the half. Nocedal's zoom is also reported to be reliable. We will compare them and choose the best one if the improvement is good enough.
 
 - Further code optimization (instruction set independent) and reorganization.
 
