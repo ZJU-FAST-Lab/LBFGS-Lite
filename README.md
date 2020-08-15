@@ -15,7 +15,7 @@ __LBFGS-Lite__ is a __C/C++__ [__header-only__](https://en.wikipedia.org/wiki/He
 
 - The objective function is required to be __twice continuously differentiable__ on its domain.
 
-- The library provides an additional callback to obtain maximum feasible stepsize. It can be helpful when the [function is closed on a bounded open domain](https://en.wikipedia.org/wiki/Closed_convex_function) instead of the whole Euclidean space. The callback avoids function evaluations at infeasible region. This can help a lot for closed functions as long as the Newton step is not always clipped.
+- The library provides an additional callback to utilize externally provided maximum feasible stepsize. It can be helpful when the [function is closed on a bounded open domain](https://en.wikipedia.org/wiki/Closed_convex_function) instead of the whole Euclidean space. The callback avoids function evaluations at infeasible region. This can help a lot for closed functions as long as the Newton step is not always clipped.
 
 - Instruction set dependent parts and L1 regularization parts in original code are removed. Multiple files are reorgainzed here with some additional modification.
 
