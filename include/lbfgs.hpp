@@ -91,7 +91,7 @@ namespace lbfgs
          *  The L-BFGS routine stores the computation results of previous m
          *  iterations to approximate the inverse hessian matrix of the current
          *  iteration. This parameter controls the size of the limited memories
-         *  (corrections). The default value is 6. Values less than 3 are
+         *  (corrections). The default value is 8. Values less than 3 are
          *  not recommended. Large values will result in excessive computing time.
          */
         int mem_size;
