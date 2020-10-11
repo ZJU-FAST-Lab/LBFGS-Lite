@@ -18,107 +18,107 @@ namespace lbfgs
  */
 struct lbfgs_parameter_t
 {
-/**
- * The number of corrections to approximate the inverse hessian matrix.
- *  The L-BFGS routine stores the computation results of previous m
- *  iterations to approximate the inverse hessian matrix of the current
- *  iteration. This parameter controls the size of the limited memories
- *  (corrections). The default value is 8. Values less than 3 are
- *  not recommended. Large values will result in excessive computing time.
- */
+    /**
+     * The number of corrections to approximate the inverse hessian matrix.
+     *  The L-BFGS routine stores the computation results of previous m
+     *  iterations to approximate the inverse hessian matrix of the current
+     *  iteration. This parameter controls the size of the limited memories
+     *  (corrections). The default value is 8. Values less than 3 are
+     *  not recommended. Large values will result in excessive computing time.
+     */
     int mem_size;
 
-/**
- * Epsilon for grad norm convergence test.
- *  This parameter determines the accuracy with which the solution is to
- *  be found. A minimization terminates when
- *      ||g|| < g_epsilon * max(1, ||x||),
- *  where ||.|| denotes the Euclidean (L2) norm. The default value is 1e-5.
- */
+    /**
+     * Epsilon for grad norm convergence test.
+     *  This parameter determines the accuracy with which the solution is to
+     *  be found. A minimization terminates when
+     *      ||g|| < g_epsilon * max(1, ||x||),
+     *  where ||.|| denotes the Euclidean (L2) norm. The default value is 1e-5.
+     */
     double g_epsilon;
 
-/**
- * Distance for delta-based convergence test.
- *  This parameter determines the distance, in iterations, to compute
- *  the rate of decrease of the objective function. If the value of this
- *  parameter is zero, the library does not perform the delta-based
- *  convergence test. The default value is 0.
- */
+    /**
+     * Distance for delta-based convergence test.
+     *  This parameter determines the distance, in iterations, to compute
+     *  the rate of decrease of the objective function. If the value of this
+     *  parameter is zero, the library does not perform the delta-based
+     *  convergence test. The default value is 0.
+     */
     int past;
 
-/**
- * Delta for convergence test.
- *  This parameter determines the minimum rate of decrease of the
- *  objective function. The library stops iterations when the
- *  following condition is met:
- *      (f' - f) / f < delta,
- *  where f' is the objective value of past iterations ago, and f is
- *  the objective value of the current iteration.
- *  The default value is 1e-5.
- */
+    /**
+     * Delta for convergence test.
+     *  This parameter determines the minimum rate of decrease of the
+     *  objective function. The library stops iterations when the
+     *  following condition is met:
+     *      (f' - f) / f < delta,
+     *  where f' is the objective value of past iterations ago, and f is
+     *  the objective value of the current iteration.
+     *  The default value is 1e-5.
+     */
     double delta;
 
-/**
- * The maximum number of iterations.
- *  The lbfgs_optimize() function terminates an optimization process with
- *  ::LBFGSERR_MAXIMUMITERATION status code when the iteration count
- *  exceedes this parameter. Setting this parameter to zero continues an
- *  optimization process until a convergence or error. The default value
- *  is 0.
- */
+    /**
+     * The maximum number of iterations.
+     *  The lbfgs_optimize() function terminates an optimization process with
+     *  ::LBFGSERR_MAXIMUMITERATION status code when the iteration count
+     *  exceedes this parameter. Setting this parameter to zero continues an
+     *  optimization process until a convergence or error. The default value
+     *  is 0.
+     */
     int max_iterations;
 
-/**
- * The maximum number of trials for the line search.
- *  This parameter controls the number of function and gradients evaluations
- *  per iteration for the line search routine. The default value is 40.
- */
+    /**
+     * The maximum number of trials for the line search.
+     *  This parameter controls the number of function and gradients evaluations
+     *  per iteration for the line search routine. The default value is 40.
+     */
     int max_linesearch;
 
-/**
- * The minimum step of the line search routine.
- *  The default value is 1e-20. This value need not be modified unless
- *  the exponents are too large for the machine being used, or unless the
- *  problem is extremely badly scaled (in which case the exponents should
- *  be increased).
- */
+    /**
+     * The minimum step of the line search routine.
+     *  The default value is 1e-20. This value need not be modified unless
+     *  the exponents are too large for the machine being used, or unless the
+     *  problem is extremely badly scaled (in which case the exponents should
+     *  be increased).
+     */
     double min_step;
 
-/**
- * The maximum step of the line search.
- *  The default value is 1e+20. This value need not be modified unless
- *  the exponents are too large for the machine being used, or unless the
- *  problem is extremely badly scaled (in which case the exponents should
- *  be increased).
- */
+    /**
+     * The maximum step of the line search.
+     *  The default value is 1e+20. This value need not be modified unless
+     *  the exponents are too large for the machine being used, or unless the
+     *  problem is extremely badly scaled (in which case the exponents should
+     *  be increased).
+     */
     double max_step;
 
-/**
- * A parameter to control the accuracy of the line search routine.
- *  The default value is 1e-4. This parameter should be greater
- *  than zero and smaller than 0.5.
- */
+    /**
+     * A parameter to control the accuracy of the line search routine.
+     *  The default value is 1e-4. This parameter should be greater
+     *  than zero and smaller than 0.5.
+     */
     double f_dec_coeff;
 
-/**
- * A parameter to control the accuracy of the line search routine.
- *  The default value is 0.9. If the function and gradient
- *  evaluations are inexpensive with respect to the cost of the
- *  iteration (which is sometimes the case when solving very large
- *  problems) it may be advantageous to set this parameter to a small
- *  value. A typical small value is 0.1. This parameter shuold be
- *  greater than the f_dec_coeff parameter (1e-4) 
- *  and smaller than 1.0.
- */
+    /**
+     * A parameter to control the accuracy of the line search routine.
+     *  The default value is 0.9. If the function and gradient
+     *  evaluations are inexpensive with respect to the cost of the
+     *  iteration (which is sometimes the case when solving very large
+     *  problems) it may be advantageous to set this parameter to a small
+     *  value. A typical small value is 0.1. This parameter shuold be
+     *  greater than the f_dec_coeff parameter (1e-4) 
+     *  and smaller than 1.0.
+     */
     double s_curv_coeff;
 
-/**
- * The machine precision for floating-point values. The default is 1e-16. 
- *  This parameter must be a positive value set by a client program to
- *  estimate the machine precision. The line search routine will terminate
- *  with the status code (::LBFGSERR_ROUNDING_ERROR) if the relative width
- *  of the interval of uncertainty is less than this parameter.
- */
+    /**
+     * The machine precision for floating-point values. The default is 1e-16. 
+     *  This parameter must be a positive value set by a client program to
+     *  estimate the machine precision. The line search routine will terminate
+     *  with the status code (::LBFGSERR_ROUNDING_ERROR) if the relative width
+     *  of the interval of uncertainty is less than this parameter.
+     */
     double xtol;
 };
 
@@ -557,17 +557,17 @@ inline int update_trial_interval(double *x,
         }
     }
 
-/*
-Trial value selection.
-*/
+    /*
+    Trial value selection.
+    */
     if (*fx < *ft)
     {
-/*
-Case 1: a higher function value.
-The minimum is brackt. If the cubic minimizer is closer
-to x than the quadratic one, the cubic one is taken, else
-the average of the minimizers is taken.
-*/
+        /*
+        Case 1: a higher function value.
+        The minimum is brackt. If the cubic minimizer is closer
+        to x than the quadratic one, the cubic one is taken, else
+        the average of the minimizers is taken.
+        */
         *brackt = 1;
         bound = 1;
         CUBIC_MINIMIZER_LBFGS(mc, *x, *fx, *dx, *t, *ft, *dt);
@@ -583,12 +583,12 @@ the average of the minimizers is taken.
     }
     else if (dsign)
     {
-/*
-Case 2: a lower function value and derivatives of
-opposite sign. The minimum is brackt. If the cubic
-minimizer is closer to x than the quadratic (secant) one,
-the cubic one is taken, else the quadratic one is taken.
-*/
+        /*
+        Case 2: a lower function value and derivatives of
+        opposite sign. The minimum is brackt. If the cubic
+        minimizer is closer to x than the quadratic (secant) one,
+        the cubic one is taken, else the quadratic one is taken.
+        */
         *brackt = 1;
         bound = 0;
         CUBIC_MINIMIZER_LBFGS(mc, *x, *fx, *dx, *t, *ft, *dt);
@@ -604,17 +604,17 @@ the cubic one is taken, else the quadratic one is taken.
     }
     else if (fabs(*dt) < fabs(*dx))
     {
-/*
-Case 3: a lower function value, derivatives of the
-same sign, and the magnitude of the derivative decreases.
-The cubic minimizer is only used if the cubic tends to
-infinity in the direction of the minimizer or if the minimum
-of the cubic is beyond t. Otherwise the cubic minimizer is
-defined to be either tmin or tmax. The quadratic (secant)
-minimizer is also computed and if the minimum is brackt
-then the the minimizer closest to x is taken, else the one
-farthest away is taken.
-*/
+        /*
+        Case 3: a lower function value, derivatives of the
+        same sign, and the magnitude of the derivative decreases.
+        The cubic minimizer is only used if the cubic tends to
+        infinity in the direction of the minimizer or if the minimum
+        of the cubic is beyond t. Otherwise the cubic minimizer is
+        defined to be either tmin or tmax. The quadratic (secant)
+        minimizer is also computed and if the minimum is brackt
+        then the the minimizer closest to x is taken, else the one
+        farthest away is taken.
+        */
         bound = 1;
         CUBIC_MINIMIZER2_LBFGS(mc, *x, *fx, *dx, *t, *ft, *dt, tmin, tmax);
         QUARD_MINIMIZER2_LBFGS(mq, *x, *dx, *t, *dt);
@@ -643,12 +643,12 @@ farthest away is taken.
     }
     else
     {
-/*
-Case 4: a lower function value, derivatives of the
-same sign, and the magnitude of the derivative does
-not decrease. If the minimum is not brackt, the step
-is either tmin or tmax, else the cubic minimizer is taken.
-*/
+        /*
+        Case 4: a lower function value, derivatives of the
+        same sign, and the magnitude of the derivative does
+        not decrease. If the minimum is not brackt, the step
+        is either tmin or tmax, else the cubic minimizer is taken.
+        */
         bound = 0;
         if (*brackt)
         {
@@ -664,17 +664,17 @@ is either tmin or tmax, else the cubic minimizer is taken.
         }
     }
 
-/*
-Update the interval of uncertainty. This update does not
-depend on the new step or the case analysis above.
+    /*
+    Update the interval of uncertainty. This update does not
+    depend on the new step or the case analysis above.
 
-- Case a: if f(x) < f(t),
-x <- x, y <- t.
-- Case b: if f(t) <= f(x) && f'(t)*f'(x) > 0,
-x <- t, y <- y.
-- Case c: if f(t) <= f(x) && f'(t)*f'(x) < 0, 
-x <- t, y <- x.
-*/
+    - Case a: if f(x) < f(t),
+    x <- x, y <- t.
+    - Case b: if f(t) <= f(x) && f'(t)*f'(x) > 0,
+    x <- t, y <- y.
+    - Case c: if f(t) <= f(x) && f'(t)*f'(x) < 0, 
+    x <- t, y <- x.
+    */
     if (*fx < *ft)
     {
         /* Case a */
@@ -703,10 +703,10 @@ x <- t, y <- x.
     if (newt < tmin)
         newt = tmin;
 
-/*
-Redefine the new trial value if it is close to the upper bound
-of the interval.
-*/
+    /*
+    Redefine the new trial value if it is close to the upper bound
+    of the interval.
+    */
     if (*brackt && bound)
     {
         mq = *x + 0.66 * (*y - *x);
@@ -773,25 +773,25 @@ inline int line_search_morethuente(int n,
     width = *stpmax - *stpmin;
     prev_width = 2.0 * width;
 
-/*
-The variables stx, fx, dgx contain the values of the step,
-function, and directional derivative at the best step.
-The variables sty, fy, dgy contain the value of the step,
-function, and derivative at the other endpoint of
-the interval of uncertainty.
-The variables stp, f, dg contain the values of the step,
-function, and derivative at the current step.
-*/
+    /*
+    The variables stx, fx, dgx contain the values of the step,
+    function, and directional derivative at the best step.
+    The variables sty, fy, dgy contain the value of the step,
+    function, and derivative at the other endpoint of
+    the interval of uncertainty.
+    The variables stp, f, dg contain the values of the step,
+    function, and derivative at the current step.
+    */
     stx = sty = 0.;
     fx = fy = finit;
     dgx = dgy = dginit;
 
     for (;;)
     {
-/*
-Set the minimum and maximum steps to correspond to the
-present interval of uncertainty.
-*/
+        /*
+        Set the minimum and maximum steps to correspond to the
+        present interval of uncertainty.
+        */
         if (brackt)
         {
             stmin = stx <= sty ? stx : sty;
@@ -809,19 +809,19 @@ present interval of uncertainty.
         if (*stpmax < *stp)
             *stp = *stpmax;
 
-/*
-If an unusual termination is to occur then let
-stp be the lowest point obtained so far.
-*/
+        /*
+        If an unusual termination is to occur then let
+        stp be the lowest point obtained so far.
+        */
         if ((brackt && ((*stp <= stmin || stmax <= *stp) || param->max_linesearch <= count + 1 || uinfo != 0)) || (brackt && (stmax - stmin <= param->xtol * stmax)))
         {
             *stp = stx;
         }
 
-/*
-Compute the current value of x:
-x <- x + (*stp) * s.
-*/
+        /*
+        Compute the current value of x:
+        x <- x + (*stp) * s.
+        */
         veccpy(x, xp, n);
         vecadd(x, s, *stp, n);
 
@@ -864,23 +864,23 @@ x <- x + (*stp) * s.
             return count;
         }
 
-/*
-In the first stage we seek a step for which the modified
-function has a nonpositive value and nonnegative derivative.
-*/
+        /*
+        In the first stage we seek a step for which the modified
+        function has a nonpositive value and nonnegative derivative.
+        */
         if (stage1 && *f <= ftest1 &&
             (param->f_dec_coeff <= param->s_curv_coeff ? param->f_dec_coeff : param->s_curv_coeff) * dginit <= dg)
         {
             stage1 = 0;
         }
 
-/*
-A modified function is used to predict the step only if
-we have not obtained a step for which the modified
-function has a nonpositive function value and nonnegative
-derivative, and if a lower function value has been
-obtained but the decrease is not sufficient.
-*/
+        /*
+        A modified function is used to predict the step only if
+        we have not obtained a step for which the modified
+        function has a nonpositive function value and nonnegative
+        derivative, and if a lower function value has been
+        obtained but the decrease is not sufficient.
+        */
         if (stage1 && ftest1 < *f && *f <= fx)
         {
             /* Define the modified function and derivative values. */
@@ -891,10 +891,10 @@ obtained but the decrease is not sufficient.
             dgxm = dgx - dgtest;
             dgym = dgy - dgtest;
 
-/*
-Call update_trial_interval() to update the interval of
-uncertainty and to compute the new step.
-*/
+            /*
+            Call update_trial_interval() to update the interval of
+            uncertainty and to compute the new step.
+            */
             uinfo = update_trial_interval(
                 &stx, &fxm, &dgxm,
                 &sty, &fym, &dgym,
@@ -909,10 +909,10 @@ uncertainty and to compute the new step.
         }
         else
         {
-/*
-Call update_trial_interval() to update the interval of
-uncertainty and to compute the new step.
-*/
+            /*
+            Call update_trial_interval() to update the interval of
+            uncertainty and to compute the new step.
+            */
             uinfo = update_trial_interval(
                 &stx, &fx, &dgx,
                 &sty, &fy, &dgy,
@@ -920,9 +920,9 @@ uncertainty and to compute the new step.
                 stmin, stmax, &brackt);
         }
 
-/*
-Force a sufficient decrease in the interval of uncertainty.
-*/
+        /*
+        Force a sufficient decrease in the interval of uncertainty.
+        */
         if (brackt)
         {
             if (0.66 * prev_width <= fabs(sty - stx))
@@ -1125,7 +1125,7 @@ inline int lbfgs_optimize(int n,
     iteration_data_t *lm = NULL, *it = NULL;
     double ys, yy;
     double xnorm, gnorm, beta;
-    double fx = 0.;
+    double fx = 0., fp;
     double rate = 0.;
 
     /* Construct a callback data. */
@@ -1216,15 +1216,15 @@ inline int lbfgs_optimize(int n,
         pf[0] = fx;
     }
 
-/*
-Compute the direction;
-we assume the initial hessian matrix H_0 as the identity matrix.
-*/
+    /*
+    Compute the direction;
+    we assume the initial hessian matrix H_0 as the identity matrix.
+    */
     vecncpy(d, g, n);
 
-/*
-Make sure that the initial variables are not a minimizer.
-*/
+    /*
+    Make sure that the initial variables are not a minimizer.
+    */
     vec2norm(&xnorm, x, n);
     vec2norm(&gnorm, g, n);
 
@@ -1236,9 +1236,9 @@ Make sure that the initial variables are not a minimizer.
     }
     else
     {
-/* Compute the initial step:
-step = 1.0 / sqrt(vecdot(d, d, n))
-*/
+        /* Compute the initial step:
+        step = 1.0 / sqrt(vecdot(d, d, n))
+        */
         vec2norminv(&step, d, n);
 
         k = 1;
@@ -1262,6 +1262,7 @@ step = 1.0 / sqrt(vecdot(d, d, n))
             veccpy(xp, x, n);
             veccpy(gp, g, n);
             stepp = step;
+            fp = fx;
 
             /* Search for an optimal step. */
             ls = line_search_morethuente(n, x, &fx, g, &step, d, xp, gp, &step_min, &step_max, &cd, &param);
@@ -1271,6 +1272,7 @@ step = 1.0 / sqrt(vecdot(d, d, n))
             {
                 /* Restore initial step for alternative line search. */
                 step = stepp;
+                fx = fp;
 
                 /* Search in a more robust way. */
                 lss = line_search_backtracking(n, x, &fx, g, &step, d, xp, gp, &step_min, &step_max, &cd, &param);
@@ -1303,11 +1305,11 @@ step = 1.0 / sqrt(vecdot(d, d, n))
                 }
             }
 
-/*
-Convergence test.
-The criterion is given by the following formula:
-|g(x)| / \max(1, |x|) < g_epsilon
-*/
+            /*
+            Convergence test.
+            The criterion is given by the following formula:
+            |g(x)| / \max(1, |x|) < g_epsilon
+            */
             if (xnorm < 1.0)
                 xnorm = 1.0;
             if (gnorm / xnorm <= param.g_epsilon)
@@ -1317,11 +1319,11 @@ The criterion is given by the following formula:
                 break;
             }
 
-/*
-Test for stopping criterion.
-The criterion is given by the following formula:
-|(f(past_x) - f(x))| / f(x) < \delta
-*/
+            /*
+            Test for stopping criterion.
+            The criterion is given by the following formula:
+            |(f(past_x) - f(x))| / f(x) < \delta
+            */
             if (pf != NULL)
             {
                 /* We don't test the stopping criterion while k < past. */
@@ -1349,33 +1351,33 @@ The criterion is given by the following formula:
                 break;
             }
 
-/*
-Update vectors s and y:
-s_{k+1} = x_{k+1} - x_{k} = \step * d_{k}.
-y_{k+1} = g_{k+1} - g_{k}.
-*/
+            /*
+            Update vectors s and y:
+            s_{k+1} = x_{k+1} - x_{k} = \step * d_{k}.
+            y_{k+1} = g_{k+1} - g_{k}.
+            */
             it = &lm[end];
             vecdiff(it->s, x, xp, n);
             vecdiff(it->y, g, gp, n);
 
-/*
-Compute scalars ys and yy:
-ys = y^t \cdot s = 1 / \rho.
-yy = y^t \cdot y.
-Notice that yy is used for scaling the hessian matrix H_0 (Cholesky factor).
-*/
+            /*
+            Compute scalars ys and yy:
+            ys = y^t \cdot s = 1 / \rho.
+            yy = y^t \cdot y.
+            Notice that yy is used for scaling the hessian matrix H_0 (Cholesky factor).
+            */
             vecdot(&ys, it->y, it->s, n);
             vecdot(&yy, it->y, it->y, n);
             it->ys = ys;
 
-/*
-Recursive formula to compute dir = -(H \cdot g).
-This is described in page 779 of:
-Jorge Nocedal.
-Updating Quasi-Newton Matrices with Limited Storage.
-Mathematics of Computation, Vol. 35, No. 151,
-pp. 773--782, 1980.
-*/
+            /*
+            Recursive formula to compute dir = -(H \cdot g).
+            This is described in page 779 of:
+            Jorge Nocedal.
+            Updating Quasi-Newton Matrices with Limited Storage.
+            Mathematics of Computation, Vol. 35, No. 151,
+            pp. 773--782, 1980.
+            */
             bound = (m <= k) ? m : k;
             ++k;
             end = (end + 1) % m;
@@ -1408,9 +1410,9 @@ pp. 773--782, 1980.
                 j = (j + 1) % m; /* if (++j == m) j = 0; */
             }
 
-/*
-Now the search direction d is ready. We try step = 1 first.
-*/
+            /*
+            Now the search direction d is ready. We try step = 1 first.
+            */
             step = 1.0;
         }
     }
