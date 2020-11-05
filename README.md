@@ -39,4 +39,4 @@ LBFGS-Lite is distributed under the term of the MIT license according the previo
 
 ## 7. Maintaince
 
-If any bug, please contact (Zhepei Wang)[https://zhepeiwang.github.io/] (<wangzhepei@live.com>).
+If any bug, please contact [Zhepei Wang](https://zhepeiwang.github.io/) (<wangzhepei@live.com>).
