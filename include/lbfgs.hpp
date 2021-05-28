@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cfloat>
 #include <cmath>
 
 namespace lbfgs
@@ -1370,44 +1371,48 @@ inline int lbfgs_optimize(int n,
             vecdot(&yy, it->y, it->y, n);
             it->ys = ys;
 
-            /*
-            Recursive formula to compute dir = -(H \cdot g).
-            This is described in page 779 of:
-            Jorge Nocedal.
-            Updating Quasi-Newton Matrices with Limited Storage.
-            Mathematics of Computation, Vol. 35, No. 151,
-            pp. 773--782, 1980.
-            */
-            bound = (m <= k) ? m : k;
-            ++k;
-            end = (end + 1) % m;
-
             /* Compute the negative of gradients. */
             vecncpy(d, g, n);
 
-            j = end;
-            for (i = 0; i < bound; ++i)
+            /* Skip L-BFGS update when ys is too small as proposed in Ceres Solver */
+            if(ys > DBL_EPSILON)
             {
-                j = (j + m - 1) % m; /* if (--j == -1) j = m-1; */
-                it = &lm[j];
-                /* \alpha_{j} = \rho_{j} s^{t}_{j} \cdot q_{k+1}. */
-                vecdot(&it->alpha, it->s, d, n);
-                it->alpha /= it->ys;
-                /* q_{i} = q_{i+1} - \alpha_{i} y_{i}. */
-                vecadd(d, it->y, -it->alpha, n);
-            }
+                /*
+                Recursive formula to compute dir = -(H \cdot g).
+                This is described in page 779 of:
+                Jorge Nocedal.
+                Updating Quasi-Newton Matrices with Limited Storage.
+                Mathematics of Computation, Vol. 35, No. 151,
+                pp. 773--782, 1980.
+                */
+                bound = (m <= k) ? m : k;
+                ++k;
+                end = (end + 1) % m;
 
-            vecscale(d, ys / yy, n);
+                j = end;
+                for (i = 0; i < bound; ++i)
+                {
+                    j = (j + m - 1) % m; /* if (--j == -1) j = m-1; */
+                    it = &lm[j];
+                    /* \alpha_{j} = \rho_{j} s^{t}_{j} \cdot q_{k+1}. */
+                    vecdot(&it->alpha, it->s, d, n);
+                    it->alpha /= it->ys;
+                    /* q_{i} = q_{i+1} - \alpha_{i} y_{i}. */
+                    vecadd(d, it->y, -it->alpha, n);
+                }
 
-            for (i = 0; i < bound; ++i)
-            {
-                it = &lm[j];
-                /* \beta_{j} = \rho_{j} y^t_{j} \cdot \gamm_{i}. */
-                vecdot(&beta, it->y, d, n);
-                beta /= it->ys;
-                /* \gamm_{i+1} = \gamm_{i} + (\alpha_{j} - \beta_{j}) s_{j}. */
-                vecadd(d, it->s, it->alpha - beta, n);
-                j = (j + 1) % m; /* if (++j == m) j = 0; */
+                vecscale(d, ys / yy, n);
+
+                for (i = 0; i < bound; ++i)
+                {
+                    it = &lm[j];
+                    /* \beta_{j} = \rho_{j} y^t_{j} \cdot \gamm_{i}. */
+                    vecdot(&beta, it->y, d, n);
+                    beta /= it->ys;
+                    /* \gamm_{i+1} = \gamm_{i} + (\alpha_{j} - \beta_{j}) s_{j}. */
+                    vecadd(d, it->s, it->alpha - beta, n);
+                    j = (j + 1) % m; /* if (++j == m) j = 0; */
+                }
             }
 
             /*
