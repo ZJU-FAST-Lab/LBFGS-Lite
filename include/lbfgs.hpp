@@ -107,7 +107,7 @@ struct lbfgs_parameter_t
      *  evaluations are inexpensive with respect to the cost of the
      *  iteration (which is sometimes the case when solving very large
      *  problems) it may be advantageous to set this parameter to a small
-     *  value. A typical small value is 0.1. This parameter shuold be
+     *  value. A typical small value is 0.1. This parameter should be
      *  greater than the f_dec_coeff parameter (1e-4) 
      *  and smaller than 1.0.
      */
