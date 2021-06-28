@@ -114,6 +114,13 @@ namespace lbfgs
         double s_curv_coeff;
 
         /**
+         * A parameter to determine which curvature condition to use.
+         *  The default value is 1, implying a strong Wolfe condition.
+         *  If the value is 0, then a weak Wolfe condition is used.
+         */
+        int abs_curv_cond;
+
+        /**
          * The machine precision for floating-point values. The default is 1e-16. 
          *  This parameter must be a positive value set by a client program to
          *  estimate the machine precision. The line search routine will terminate
@@ -137,6 +144,7 @@ namespace lbfgs
         1e20,
         1e-4,
         0.9,
+        1,
         1.0e-16,
     };
 
@@ -177,7 +185,7 @@ namespace lbfgs
         LBFGSERR_INVALID_MAXSTEP,
         /** Invalid parameter lbfgs_parameter_t::f_dec_coeff specified. */
         LBFGSERR_INVALID_FDECCOEFF,
-        /** Invalid parameter lbfgs_parameter_t::wolfe specified. */
+        /** Invalid parameter lbfgs_parameter_t::s_curv_coeff specified. */
         LBFGSERR_INVALID_SCURVCOEFF,
         /** Invalid parameter lbfgs_parameter_t::xtol specified. */
         LBFGSERR_INVALID_XTOL,
@@ -332,7 +340,9 @@ namespace lbfgs
     a = theta / s;                                      \
     gamm = s * sqrt(a * a - ((du) / s) * ((dv) / s));   \
     if ((v) < (u))                                      \
+    {                                                   \
         gamm = -gamm;                                   \
+    }                                                   \
     p = gamm - (du) + theta;                            \
     q = gamm - (du) + gamm + (dv);                      \
     r = p / q;                                          \
@@ -363,7 +373,9 @@ namespace lbfgs
     gamm = a * a - ((du) / s) * ((dv) / s);                          \
     gamm = gamm > 0 ? s * sqrt(gamm) : 0;                            \
     if ((u) < (v))                                                   \
+    {                                                                \
         gamm = -gamm;                                                \
+    }                                                                \
     p = gamm - (dv) + theta;                                         \
     q = gamm - (dv) + gamm + (du);                                   \
     r = p / q;                                                       \
@@ -696,9 +708,13 @@ namespace lbfgs
 
         /* Clip the new trial value in [tmin, tmax]. */
         if (tmax < newt)
+        {
             newt = tmax;
+        }
         if (newt < tmin)
+        {
             newt = tmin;
+        }
 
         /*
         Redefine the new trial value if it is close to the upper bound
@@ -802,17 +818,21 @@ namespace lbfgs
 
             /* Clip the step in the range of [stpmin, stpmax]. */
             if (*stp < *stpmin)
+            {
                 *stp = *stpmin;
+            }
             if (*stpmax < *stp)
+            {
                 *stp = *stpmax;
+            }
 
             /*
             If an unusual termination is to occur then let
             stp be the lowest point obtained so far.
             */
-            if ((brackt && ((*stp <= stmin || stmax <= *stp) || param->max_linesearch <= count + 1 || uinfo != 0)) || (brackt && (stmax - stmin <= param->xtol * stmax)))
+            if (brackt && (*stp <= stmin || stmax <= *stp || uinfo != 0 || stmax - stmin <= param->xtol * stmax))
             {
-                *stp = stx;
+                *stp = stmin;
             }
 
             /*
@@ -830,7 +850,7 @@ namespace lbfgs
             ++count;
 
             /* Test for errors and convergence. */
-            if ((std::isinf(*f) || std::isnan(*f)) || (brackt && ((*stp <= stmin || stmax <= *stp) || uinfo != 0)))
+            if ((std::isinf(*f) || std::isnan(*f)) || (brackt && (*stp <= stmin || stmax <= *stp || uinfo != 0)))
             {
                 /* Rounding errors prevent further progress. */
                 return LBFGSERR_ROUNDING_ERROR;
@@ -855,9 +875,10 @@ namespace lbfgs
                 /* Maximum number of iteration. */
                 return LBFGSERR_MAXIMUMLINESEARCH;
             }
-            if (*f <= ftest1 && fabs(dg) <= param->s_curv_coeff * (-dginit))
+            if (*f <= ftest1 && ((!param->abs_curv_cond && -dg <= param->s_curv_coeff * (-dginit)) ||
+                                 (param->abs_curv_cond && fabs(dg) <= param->s_curv_coeff * (-dginit))))
             {
-                /* The sufficient decrease condition and the strong curvature condition hold. */
+                /* The sufficient decrease condition and the curvature condition hold. */
                 return count;
             }
 
@@ -1131,7 +1152,9 @@ namespace lbfgs
         vec2norm(&gnorm, g, n);
 
         if (xnorm < 1.0)
+        {
             xnorm = 1.0;
+        }
         if (gnorm / xnorm <= param.g_epsilon)
         {
             ret = LBFGS_ALREADY_MINIMIZED;
@@ -1157,7 +1180,9 @@ namespace lbfgs
                     step_max = cd.proc_stepbound(cd.instance, xp, d, cd.n);
                     step_max = step_max < param.max_step ? step_max : param.max_step;
                     if (step >= step_max)
+                    {
                         step = step_max / 2.0;
+                    }
                 }
 
                 /* Store the current position, gradient vectors and initial step. */
@@ -1197,7 +1222,9 @@ namespace lbfgs
                 |g(x)| / \max(1, |x|) < g_epsilon
                 */
                 if (xnorm < 1.0)
+                {
                     xnorm = 1.0;
+                }
                 if (gnorm / xnorm <= param.g_epsilon)
                 {
                     /* Convergence. */
