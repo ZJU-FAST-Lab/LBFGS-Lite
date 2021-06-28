@@ -389,8 +389,8 @@ namespace lbfgs
      *  @param  v       The value of another point, v.
      *  @param  fv      The value of f(v).
      */
-#define QUARD_MINIMIZER_LBFGS(qm, u, fu, du, v, fv) \
-    a = (v) - (u);                                  \
+#define QUAD_MINIMIZER_LBFGS(qm, u, fu, du, v, fv) \
+    a = (v) - (u);                                 \
     (qm) = (u) + (du) / (((fu) - (fv)) / a + (du)) / 2 * a;
 
     /**
@@ -401,8 +401,8 @@ namespace lbfgs
      *  @param  v       The value of another point, v.
      *  @param  dv      The value of f'(v).
      */
-#define QUARD_MINIMIZER2_LBFGS(qm, u, du, v, dv) \
-    a = (u) - (v);                               \
+#define QUAD_MINIMIZER2_LBFGS(qm, u, du, v, dv) \
+    a = (u) - (v);                              \
     (qm) = (v) + (dv) / ((dv) - (du)) * a;
 
     inline void *vecalloc(size_t size)
@@ -532,7 +532,7 @@ namespace lbfgs
         double mc;            /* minimizer of an interpolated cubic. */
         double mq;            /* minimizer of an interpolated quadratic. */
         double newt;          /* new trial value. */
-        USES_MINIMIZER_LBFGS; /* for CUBIC_MINIMIZER and QUARD_MINIMIZER. */
+        USES_MINIMIZER_LBFGS; /* for CUBIC_MINIMIZER and QUAD_MINIMIZER. */
 
         /* Check the input parameters for errors. */
         if (*brackt)
@@ -568,7 +568,7 @@ namespace lbfgs
             *brackt = 1;
             bound = 1;
             CUBIC_MINIMIZER_LBFGS(mc, *x, *fx, *dx, *t, *ft, *dt);
-            QUARD_MINIMIZER_LBFGS(mq, *x, *fx, *dx, *t, *ft);
+            QUAD_MINIMIZER_LBFGS(mq, *x, *fx, *dx, *t, *ft);
             if (fabs(mc - *x) < fabs(mq - *x))
             {
                 newt = mc;
@@ -589,7 +589,7 @@ namespace lbfgs
             *brackt = 1;
             bound = 0;
             CUBIC_MINIMIZER_LBFGS(mc, *x, *fx, *dx, *t, *ft, *dt);
-            QUARD_MINIMIZER2_LBFGS(mq, *x, *dx, *t, *dt);
+            QUAD_MINIMIZER2_LBFGS(mq, *x, *dx, *t, *dt);
             if (fabs(mc - *t) > fabs(mq - *t))
             {
                 newt = mc;
@@ -614,7 +614,7 @@ namespace lbfgs
             */
             bound = 1;
             CUBIC_MINIMIZER2_LBFGS(mc, *x, *fx, *dx, *t, *ft, *dt, tmin, tmax);
-            QUARD_MINIMIZER2_LBFGS(mq, *x, *dx, *t, *dt);
+            QUAD_MINIMIZER2_LBFGS(mq, *x, *dx, *t, *dt);
             if (*brackt)
             {
                 if (fabs(*t - mc) < fabs(*t - mq))
