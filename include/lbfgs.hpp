@@ -52,7 +52,7 @@ namespace lbfgs
          *  This parameter determines the minimum rate of decrease of the
          *  objective function. The library stops iterations when the
          *  following condition is met:
-         *      (f' - f) / f < delta,
+         *      |f' - f| / f < delta,
          *  where f' is the objective value of past iterations ago, and f is
          *  the objective value of the current iteration.
          *  The default value is 1e-5.
@@ -1235,7 +1235,7 @@ namespace lbfgs
                 /*
                 Test for stopping criterion.
                 The criterion is given by the following formula:
-                |(f(past_x) - f(x))| / f(x) < \delta
+                |f(past_x) - f(x)| / f(x) < \delta
                 */
                 if (pf != NULL)
                 {
