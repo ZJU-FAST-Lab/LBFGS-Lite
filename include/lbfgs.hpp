@@ -832,7 +832,7 @@ namespace lbfgs
             */
             if (brackt && (*stp <= stmin || stmax <= *stp || uinfo != 0 || stmax - stmin <= param->xtol * stmax))
             {
-                *stp = stmin;
+                *stp = stx;
             }
 
             /*
