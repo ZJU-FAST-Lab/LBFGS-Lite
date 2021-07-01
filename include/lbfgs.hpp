@@ -5,7 +5,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <cfloat>
 #include <cmath>
 
 namespace lbfgs
@@ -135,14 +134,14 @@ namespace lbfgs
      */
     static const lbfgs_parameter_t _default_param = {
         8,
-        1e-5,
+        1.0e-5,
         0,
-        1e-5,
+        1.0e-5,
         0,
         40,
-        1e-20,
-        1e20,
-        1e-4,
+        1.0e-20,
+        1.0e+20,
+        1.0e-4,
         0.9,
         1,
         1.0e-16,
@@ -326,11 +325,11 @@ namespace lbfgs
      *  @param  du      The value of f'(u).
      *  @param  v       The value of another point, v.
      *  @param  fv      The value of f(v).
-     *  @param  du      The value of f'(v).
+     *  @param  dv      The value of f'(v).
      */
 #define CUBIC_MINIMIZER_LBFGS(cm, u, fu, du, v, fv, dv) \
     d = (v) - (u);                                      \
-    theta = ((fu) - (fv)) * 3 / d + (du) + (dv);        \
+    theta = ((fu) - (fv)) * 3.0 / d + (du) + (dv);      \
     p = fabs(theta);                                    \
     q = fabs(du);                                       \
     r = fabs(dv);                                       \
@@ -362,7 +361,7 @@ namespace lbfgs
      */
 #define CUBIC_MINIMIZER2_LBFGS(cm, u, fu, du, v, fv, dv, xmin, xmax) \
     d = (v) - (u);                                                   \
-    theta = ((fu) - (fv)) * 3 / d + (du) + (dv);                     \
+    theta = ((fu) - (fv)) * 3.0 / d + (du) + (dv);                   \
     p = fabs(theta);                                                 \
     q = fabs(du);                                                    \
     r = fabs(dv);                                                    \
@@ -371,7 +370,7 @@ namespace lbfgs
     /* gamm = s*sqrt((theta/s)**2 - (du/s) * (dv/s)) */              \
     a = theta / s;                                                   \
     gamm = a * a - ((du) / s) * ((dv) / s);                          \
-    gamm = gamm > 0 ? s * sqrt(gamm) : 0;                            \
+    gamm = gamm > 0.0 ? s * sqrt(gamm) : 0.0;                        \
     if ((u) < (v))                                                   \
     {                                                                \
         gamm = -gamm;                                                \
@@ -379,11 +378,11 @@ namespace lbfgs
     p = gamm - (dv) + theta;                                         \
     q = gamm - (dv) + gamm + (du);                                   \
     r = p / q;                                                       \
-    if (r < 0. && gamm != 0.)                                        \
+    if (r < 0.0 && gamm != 0.0)                                      \
     {                                                                \
         (cm) = (v)-r * d;                                            \
     }                                                                \
-    else if (d > 0)                                                  \
+    else if (d > 0.0)                                                \
     {                                                                \
         (cm) = (xmax);                                               \
     }                                                                \
@@ -403,7 +402,7 @@ namespace lbfgs
      */
 #define QUAD_MINIMIZER_LBFGS(qm, u, fu, du, v, fv) \
     a = (v) - (u);                                 \
-    (qm) = (u) + (du) / (((fu) - (fv)) / a + (du)) / 2 * a;
+    (qm) = (u) + (du) / (((fu) - (fv)) / a + (du)) / 2.0 * a;
 
     /**
      * Find a minimizer of an interpolated quadratic function.
@@ -540,7 +539,7 @@ namespace lbfgs
                                      int *brackt)
     {
         int bound;
-        int dsign = *dt * (*dx / fabs(*dx)) < 0.;
+        int dsign = *dt * (*dx / fabs(*dx)) < 0.0;
         double mc;            /* minimizer of an interpolated cubic. */
         double mq;            /* minimizer of an interpolated quadratic. */
         double newt;          /* new trial value. */
@@ -554,7 +553,7 @@ namespace lbfgs
                 /* The trival value t is out of the interval. */
                 return LBFGSERR_OUTOFINTERVAL;
             }
-            if (0. <= *dx * (*t - *x))
+            if (0.0 <= *dx * (*t - *x))
             {
                 /* The function must decrease from x. */
                 return LBFGSERR_INCREASEGRADIENT;
@@ -587,7 +586,7 @@ namespace lbfgs
             }
             else
             {
-                newt = mc + 0.5 * (mq - mc);
+                newt = 0.5 * (mc + mq);
             }
         }
         else if (dsign)
@@ -726,17 +725,43 @@ namespace lbfgs
             if (*x < *y)
             {
                 if (mq < newt)
+                {
                     newt = mq;
+                }
             }
             else
             {
                 if (newt < mq)
+                {
                     newt = mq;
+                }
+            }
+        }
+
+        /*
+        Safeguard the trial value if it is too close to the lower bound
+        of the interval. This is common for stiff functions.
+        */
+        if (*brackt)
+        {
+            mq = 0.01 * (*y - *x);
+            if (*x < *y)
+            {
+                mq = *x + mq;
+            }
+            else
+            {
+                mq = *y - mq;
+            }
+            if (newt < mq)
+            {
+                newt = mq;
             }
         }
 
         /* Return the new trial value. */
         *t = newt;
+
         return 0;
     }
 
@@ -764,7 +789,7 @@ namespace lbfgs
         double stmin, stmax;
 
         /* Check the input parameters for errors. */
-        if (*stp <= 0.)
+        if (*stp <= 0.0)
         {
             return LBFGSERR_INVALIDPARAMETERS;
         }
@@ -773,7 +798,7 @@ namespace lbfgs
         vecdot(&dginit, gp, s, n);
 
         /* Make sure that s points to a descent direction. */
-        if (0 < dginit)
+        if (0.0 < dginit)
         {
             return LBFGSERR_INCREASEGRADIENT;
         }
@@ -795,7 +820,7 @@ namespace lbfgs
         The variables stp, f, dg contain the values of the step,
         function, and derivative at the current step.
         */
-        stx = sty = 0.;
+        stx = sty = 0.0;
         fx = fy = finit;
         dgx = dgy = dginit;
 
@@ -945,7 +970,7 @@ namespace lbfgs
             {
                 if (0.66 * prev_width <= fabs(sty - stx))
                 {
-                    *stp = stx + 0.5 * (sty - stx);
+                    *stp = 0.5 * (stx + sty);
                 }
                 prev_width = width;
                 width = fabs(sty - stx);
@@ -1048,8 +1073,8 @@ namespace lbfgs
         iteration_data_t *lm = NULL, *it = NULL;
         double ys, yy;
         double xnorm, gnorm, beta;
-        double fx = 0.;
-        double rate = 0.;
+        double fx = 0.0;
+        double rate = 0.0;
 
         /* Construct a callback data. */
         callback_data_t cd;
@@ -1068,7 +1093,7 @@ namespace lbfgs
         {
             return LBFGSERR_INVALID_MEMSIZE;
         }
-        if (param.g_epsilon < 0.)
+        if (param.g_epsilon < 0.0)
         {
             return LBFGSERR_INVALID_GEPSILON;
         }
@@ -1076,11 +1101,11 @@ namespace lbfgs
         {
             return LBFGSERR_INVALID_TESTPERIOD;
         }
-        if (param.delta < 0.)
+        if (param.delta < 0.0)
         {
             return LBFGSERR_INVALID_DELTA;
         }
-        if (param.min_step < 0.)
+        if (param.min_step < 0.0)
         {
             return LBFGSERR_INVALID_MINSTEP;
         }
@@ -1088,15 +1113,15 @@ namespace lbfgs
         {
             return LBFGSERR_INVALID_MAXSTEP;
         }
-        if (param.f_dec_coeff < 0.)
+        if (param.f_dec_coeff < 0.0)
         {
             return LBFGSERR_INVALID_FDECCOEFF;
         }
-        if (param.s_curv_coeff <= param.f_dec_coeff || 1. <= param.s_curv_coeff)
+        if (param.s_curv_coeff <= param.f_dec_coeff || 1.0 <= param.s_curv_coeff)
         {
             return LBFGSERR_INVALID_SCURVCOEFF;
         }
-        if (param.xtol < 0.)
+        if (param.xtol < 0.0)
         {
             return LBFGSERR_INVALID_XTOL;
         }
@@ -1118,8 +1143,8 @@ namespace lbfgs
         for (i = 0; i < m; ++i)
         {
             it = &lm[i];
-            it->alpha = 0;
-            it->ys = 0;
+            it->alpha = 0.0;
+            it->ys = 0.0;
             it->s = (double *)vecalloc(n * sizeof(double));
             it->y = (double *)vecalloc(n * sizeof(double));
         }
@@ -1181,7 +1206,7 @@ namespace lbfgs
                     step_max = step_max < param.max_step ? step_max : param.max_step;
                     if (step >= step_max)
                     {
-                        step = step_max / 2.0;
+                        step = 0.5 * step_max;
                     }
                 }
 
@@ -1287,7 +1312,7 @@ namespace lbfgs
                 vecncpy(d, g, n);
 
                 /* Skip L-BFGS update when ys is too small as proposed in Ceres Solver */
-                if (ys > DBL_EPSILON)
+                if (ys > 0.0)
                 {
                     /*
                     Recursive formula to compute dir = -(H \cdot g).
