@@ -71,7 +71,7 @@ namespace lbfgs
         /**
          * The maximum number of trials for the line search.
          *  This parameter controls the number of function and gradients evaluations
-         *  per iteration for the line search routine. The default value is 40.
+         *  per iteration for the line search routine. The default value is 60.
          */
         int max_linesearch;
 
@@ -127,6 +127,16 @@ namespace lbfgs
          *  of the interval of uncertainty is less than this parameter.
          */
         double xtol;
+
+        /**
+         * A parameter to determine interval shrink strategy in line search.
+         *  The default value is 0, guaranteeing at least 2^(-m/2) decreasing of 
+         *  uncertainty as trial number m grows. It is used by More and Thuente.
+         *  If the value is 1, then at least 2^(-m) decreasing of uncertainty is 
+         *  guaranteed. It is used by Hager and Zhang in TOMS851. The former suits 
+         *  well-conditioned functions while the latter suits stiff functions.
+         */
+        int shrink_type;
     };
 
     /**
@@ -138,13 +148,14 @@ namespace lbfgs
         0,
         1.0e-5,
         0,
-        40,
+        60,
         1.0e-20,
         1.0e+20,
         1.0e-4,
         0.9,
         1,
         1.0e-16,
+        0,
     };
 
     /**
@@ -972,8 +983,15 @@ namespace lbfgs
                 {
                     *stp = 0.5 * (stx + sty);
                 }
-                prev_width = width;
-                width = fabs(sty - stx);
+                if (param->shrink_type)
+                {
+                    prev_width = fabs(sty - stx);
+                }
+                else
+                {
+                    prev_width = width;
+                    width = fabs(sty - stx);
+                }
             }
         }
 
