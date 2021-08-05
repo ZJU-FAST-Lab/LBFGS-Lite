@@ -250,7 +250,9 @@ namespace lbfgs
      *  The lbfgs_optimize() function call this function to obtain the values of the
      *  upperbound of the stepsize to search in, provided with the beginning values of
      *  variables before the linear search, and the current step vector (can be descent direction). 
-     *  A client program can implement this function for more efficient linesearch. 
+     *  A client program can implement this function for more efficient linesearch. Any step 
+     *  larger than this bound should not be considered. For example, it has a very large or even 
+     *  inf function value. Note that the function value at the provided bound should be FINITE!
      *  If it is not used, just set it NULL or nullptr.
      *  
      *  @param  instance    The user data sent for lbfgs_optimize() function by the client.
@@ -790,12 +792,12 @@ namespace lbfgs
                                        const lbfgs_parameter_t *param)
     {
         int count = 0;
-        int brackt, stage1, uinfo = 0;
+        int brackt, stage, uinfo = 0;
         double dg;
         double stx, fx, dgx;
         double sty, fy, dgy;
         double fxm, dgxm, fym, dgym, fm, dgm;
-        double finit, ftest1, dginit, dgtest;
+        double finit, ftest, dginit, dgtest;
         double width, prev_width;
         double stmin, stmax;
 
@@ -816,7 +818,7 @@ namespace lbfgs
 
         /* Initialize local variables. */
         brackt = 0;
-        stage1 = 1;
+        stage = 1;
         finit = *f;
         dgtest = param->f_dec_coeff * dginit;
         width = *stpmax - *stpmin;
@@ -882,7 +884,7 @@ namespace lbfgs
             *f = cd->proc_evaluate(cd->instance, x, g, cd->n);
             vecdot(&dg, g, s, n);
 
-            ftest1 = finit + *stp * dgtest;
+            ftest = finit + *stp * dgtest;
             ++count;
 
             /* Test for errors and convergence. */
@@ -891,12 +893,12 @@ namespace lbfgs
                 /* Rounding errors prevent further progress. */
                 return LBFGSERR_ROUNDING_ERROR;
             }
-            if (*stp == *stpmax && *f <= ftest1 && dg <= dgtest)
+            if (*stp == *stpmax && *f <= ftest && dg <= dgtest)
             {
                 /* The step is the maximum value. */
                 return LBFGSERR_MAXIMUMSTEP;
             }
-            if (*stp == *stpmin && (ftest1 < *f || dgtest <= dg))
+            if (*stp == *stpmin && (ftest < *f || dgtest <= dg))
             {
                 /* The step is the minimum value. */
                 return LBFGSERR_MINIMUMSTEP;
@@ -911,8 +913,8 @@ namespace lbfgs
                 /* Maximum number of iteration. */
                 return LBFGSERR_MAXIMUMLINESEARCH;
             }
-            if (*f <= ftest1 && ((!param->abs_curv_cond && -dg <= param->s_curv_coeff * (-dginit)) ||
-                                 (param->abs_curv_cond && fabs(dg) <= param->s_curv_coeff * (-dginit))))
+            if (*f <= ftest && ((!param->abs_curv_cond && -dg <= param->s_curv_coeff * (-dginit)) ||
+                                (param->abs_curv_cond && fabs(dg) <= param->s_curv_coeff * (-dginit))))
             {
                 /* The sufficient decrease condition and the curvature condition hold. */
                 return count;
@@ -922,10 +924,10 @@ namespace lbfgs
             In the first stage we seek a step for which the modified
             function has a nonpositive value and nonnegative derivative.
             */
-            if (stage1 && *f <= ftest1 &&
+            if (stage && *f <= ftest &&
                 (param->f_dec_coeff <= param->s_curv_coeff ? param->f_dec_coeff : param->s_curv_coeff) * dginit <= dg)
             {
-                stage1 = 0;
+                stage = 0;
             }
 
             /*
@@ -935,7 +937,7 @@ namespace lbfgs
             derivative, and if a lower function value has been
             obtained but the decrease is not sufficient.
             */
-            if (stage1 && ftest1 < *f && *f <= fx)
+            if (stage && ftest < *f && *f <= fx)
             {
                 /* Define the modified function and derivative values. */
                 fm = *f - *stp * dgtest;
