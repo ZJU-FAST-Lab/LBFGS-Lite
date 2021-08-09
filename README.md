@@ -3,7 +3,7 @@ A header-only LBFGS unconstrained optimizer.
 
 ## 0. About
 
-__LBFGS-Lite__ is a __C/C++__ [__header-only__](https://en.wikipedia.org/wiki/Header-only) library for __unconstrained optimization__ on __twice continuously differentiable functions__. This code is a modified version of [__liblbfgs__](https://github.com/chokkan/liblbfgs), so that only necessary part is preserved for simplicity.
+__LBFGS-Lite__ is a __C/C++__ [__header-only__](https://en.wikipedia.org/wiki/Header-only) library for __unconstrained optimization__ on __twice continuously differentiable functions__. The code is modified from [__liblbfgs__](https://github.com/chokkan/liblbfgs). Only necessary part is preserved for simplicity. Some engineering considerations are also added for improved robustness.
 
 ## 1. Features
 
@@ -17,7 +17,7 @@ __LBFGS-Lite__ is a __C/C++__ [__header-only__](https://en.wikipedia.org/wiki/He
 
 - The library provides an additional callback to utilize externally provided maximum feasible stepsize. It can be helpful when the [function is closed on a bounded open domain](https://en.wikipedia.org/wiki/Closed_convex_function) instead of the whole Euclidean space. The callback avoids function evaluations at infeasible region. This can help a lot for closed functions as long as the Newton step is not always clipped.
 
-- Engineering features such as skipping update at extremely small curvature are also adopted.
+- Engineering features such as skipping update at extremely small curvature and lower safeguarding for ill-conditioned cases are also adopted.
 
 - Instruction set dependent parts and L1 regularization parts in original code are removed. Multiple files are reorgainzed here with some additional modification.
 
