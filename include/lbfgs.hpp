@@ -584,9 +584,13 @@ namespace lbfgs
 
             /* Evaluate the function and gradient values. */
             *f = cd->proc_evaluate(cd->instance, x, g, cd->n);
-
             ++count;
 
+            /* Test for errors. */
+            if (std::isinf(*f) || std::isnan(*f))
+            {
+                return LBFGSERR_INVALID_FUNCVAL;
+            }
             /* Check the weak Armijo condition. */
             if (*f > finit + *stp * dgtest)
             {
@@ -605,6 +609,11 @@ namespace lbfgs
                 {
                     return count;
                 }
+            }
+            if (param->max_linesearch <= count)
+            {
+                /* Maximum number of iteration. */
+                return LBFGSERR_MAXIMUMLINESEARCH;
             }
 
             if (brackt)
@@ -634,11 +643,6 @@ namespace lbfgs
                     touched = 1;
                     *stp = *stpmax;
                 }
-            }
-            if (param->max_linesearch <= count)
-            {
-                /* Maximum number of iteration. */
-                return LBFGSERR_MAXIMUMLINESEARCH;
             }
         }
     }
@@ -1049,16 +1053,16 @@ namespace lbfgs
                 /* Relative width of the interval of uncertainty is at most xtol. */
                 return LBFGSERR_WIDTHTOOSMALL;
             }
-            if (param->max_linesearch <= count)
-            {
-                /* Maximum number of iteration. */
-                return LBFGSERR_MAXIMUMLINESEARCH;
-            }
             if (*f <= ftest && ((!param->abs_curv_cond && -dg <= param->s_curv_coeff * (-dginit)) ||
                                 (param->abs_curv_cond && fabs(dg) <= param->s_curv_coeff * (-dginit))))
             {
                 /* The sufficient decrease condition and the curvature condition hold. */
                 return count;
+            }
+            if (param->max_linesearch <= count)
+            {
+                /* Maximum number of iteration. */
+                return LBFGSERR_MAXIMUMLINESEARCH;
             }
 
             /*
