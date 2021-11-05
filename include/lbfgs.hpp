@@ -34,6 +34,7 @@ namespace lbfgs
          *  be found. A minimization terminates when
          *      ||g|| < g_epsilon * max(1, ||x||),
          *  where ||.|| denotes the Euclidean (L2) norm. The default value is 1e-5.
+         *  DO NOT use this parameter to test convergence for nonsmooth functions.
          */
         double g_epsilon;
 
@@ -113,13 +114,6 @@ namespace lbfgs
         double s_curv_coeff;
 
         /**
-         * A parameter to determine which curvature condition to use.
-         *  The default value is 1, implying a strong Wolfe condition.
-         *  If the value is 0, then a weak Wolfe condition is used.
-         */
-        int abs_curv_cond;
-
-        /**
          * The machine precision for floating-point values. The default is 1e-16. 
          *  This parameter must be a positive value set by a client program to
          *  estimate the machine precision. The line search routine will terminate
@@ -129,7 +123,29 @@ namespace lbfgs
         double xtol;
 
         /**
-         * A parameter to determine interval shrink strategy in line search.
+         * A parameter to choose the method used for line search. The default is 1.
+         *  line_search_lewisoverton: line_search_type = 0;
+         *                            Highly robust;
+         *                            For smooth (C2) or nonsmooth functions;
+         *                            Only supports the weak Wolfe condition.
+         *  line_search_morethuente:  line_search_type = 1;
+         *                            Highly efficient;
+         *                            Only for smooth (C2) functions;
+         *                            Supports both strong and weak Wolfe conditions.
+         */
+        int line_search_type;
+
+        /**
+         * A parameter for the function line_search_morethuente only.
+         *  This parameter determines which curvature condition to use.
+         *  The default value is 1, implying a strong Wolfe condition.
+         *  If the value is 0, then a weak Wolfe condition is used.
+         */
+        int abs_curv_cond;
+
+        /**
+         * A parameter for the function line_search_morethuente only.
+         *  This parameter determines the interval shrink strategy in line search.
          *  The default value is 0, guaranteeing at least 2^(-m/2) decreasing of 
          *  uncertainty as trial number m grows. It is used by More and Thuente.
          *  If the value is 1, then at least 2^(-m) decreasing of uncertainty is 
@@ -153,17 +169,16 @@ namespace lbfgs
         1.0e+20,
         1.0e-4,
         0.9,
-        1,
         1.0e-16,
+        1,
+        1,
         0,
     };
 
     /**
-     *  Return values of lbfgs_optimize().
-     * 
-     * Roughly speaking, a negative value indicates an error.
+     * Return values of lbfgs_optimize().
+     *  Roughly speaking, a negative value indicates an error.
      */
-
     enum
     {
         /** L-BFGS reaches convergence. */
@@ -205,6 +220,8 @@ namespace lbfgs
         LBFGSERR_OUTOFINTERVAL,
         /** A logic error occurred; alternatively, the interval of uncertainty became too small. */
         LBFGSERR_INCORRECT_TMINMAX,
+        /** The function value became NaN or Inf. */
+        LBFGSERR_INVALID_FUNCVAL,
         /** A rounding error occurred; alternatively, no line-search step satisfies the sufficient decrease and curvature conditions. */
         LBFGSERR_ROUNDING_ERROR,
         /** The line-search step became smaller than lbfgs_parameter_t::min_step. */
@@ -508,6 +525,123 @@ namespace lbfgs
     }
 
     // ----------------------- L-BFGS Part -----------------------
+
+    /**
+     * Line search method for smooth and nonsmooth functions.
+     *  This function performs line search to find a point that satisfy 
+     *  both the Armijo condition and the weak Wolfe condition. It is 
+     *  as robust as the backtracking line search but further applies 
+     *  to continuous and piecewise smooth functions where the strong 
+     *  Wolfe condition usually does not hold.   
+     *
+     *  @see
+     *      Adrian S. Lewis and Michael L. Overton. Nonsmooth optimization 
+     *      via quasi-Newton methods. Mathematical Programming, Vol 141, 
+     *      No 1, pp. 135-163, 2013.
+     */
+    inline int line_search_lewisoverton(
+        int n,
+        double *x,
+        double *f,
+        double *g,
+        double *stp,
+        const double *s,
+        const double *xp,
+        const double *gp,
+        const double *stpmin,
+        const double *stpmax,
+        callback_data_t *cd,
+        const lbfgs_parameter_t *param)
+    {
+        int count = 0;
+        double dg, finit, dginit = 0.0, dgtest;
+        int brackt = 0, touched = 0;
+        double mu = 0.0, nu = *stpmax;
+
+        /* Check the input parameters for errors. */
+        if (*stp <= 0.0)
+        {
+            return LBFGSERR_INVALIDPARAMETERS;
+        }
+
+        /* Compute the initial gradient in the search direction. */
+        vecdot(&dginit, gp, s, n);
+
+        /* Make sure that s points to a descent direction. */
+        if (0 < dginit)
+        {
+            return LBFGSERR_INCREASEGRADIENT;
+        }
+
+        /* The initial value of the objective function. */
+        finit = *f;
+        dgtest = param->f_dec_coeff * dginit;
+
+        for (;;)
+        {
+            veccpy(x, xp, n);
+            vecadd(x, s, *stp, n);
+
+            /* Evaluate the function and gradient values. */
+            *f = cd->proc_evaluate(cd->instance, x, g, cd->n);
+
+            ++count;
+
+            /* Check the weak Armijo condition. */
+            if (*f > finit + *stp * dgtest)
+            {
+                nu = *stp;
+                brackt = 1;
+            }
+            else
+            {
+                /* Check the weak Wolfe condition. */
+                vecdot(&dg, g, s, n);
+                if (dg < param->s_curv_coeff * dginit)
+                {
+                    mu = *stp;
+                }
+                else
+                {
+                    return count;
+                }
+            }
+
+            if (brackt)
+            {
+                *stp = 0.5 * (mu + nu);
+            }
+            else
+            {
+                (*stp) *= 2.1;
+            }
+
+            if (*stp < *stpmin)
+            {
+                /* The step is the minimum value. */
+                return LBFGSERR_MINIMUMSTEP;
+            }
+            if (*stp > *stpmax)
+            {
+                if (touched)
+                {
+                    /* The step is the maximum value. */
+                    return LBFGSERR_MAXIMUMSTEP;
+                }
+                else
+                {
+                    /* The maximum value should be tried once. */
+                    touched = 1;
+                    *stp = *stpmax;
+                }
+            }
+            if (param->max_linesearch <= count)
+            {
+                /* Maximum number of iteration. */
+                return LBFGSERR_MAXIMUMLINESEARCH;
+            }
+        }
+    }
 
     /**
      * Update a safeguarded trial value and interval for line search.
@@ -868,7 +1002,10 @@ namespace lbfgs
             If an unusual termination is to occur then let
             stp be the lowest point obtained so far.
             */
-            if (brackt && (*stp <= stmin || stmax <= *stp || uinfo != 0 || stmax - stmin <= param->xtol * stmax))
+            if (brackt && (*stp <= stmin ||
+                           stmax <= *stp ||
+                           uinfo != 0 ||
+                           stmax - stmin <= param->xtol * stmax))
             {
                 *stp = stx;
             }
@@ -888,7 +1025,11 @@ namespace lbfgs
             ++count;
 
             /* Test for errors and convergence. */
-            if ((std::isinf(*f) || std::isnan(*f)) || (brackt && (*stp <= stmin || stmax <= *stp || uinfo != 0)))
+            if (std::isinf(*f) || std::isnan(*f))
+            {
+                return LBFGSERR_INVALID_FUNCVAL;
+            }
+            if (brackt && (*stp <= stmin || stmax <= *stp || uinfo != 0))
             {
                 /* Rounding errors prevent further progress. */
                 return LBFGSERR_ROUNDING_ERROR;
@@ -1235,7 +1376,14 @@ namespace lbfgs
                 veccpy(gp, g, n);
 
                 /* Search for an optimal step. */
-                ls = line_search_morethuente(n, x, &fx, g, &step, d, xp, gp, &step_min, &step_max, &cd, &param);
+                if (param.line_search_type)
+                {
+                    ls = line_search_morethuente(n, x, &fx, g, &step, d, xp, gp, &step_min, &step_max, &cd, &param);
+                }
+                else
+                {
+                    ls = line_search_lewisoverton(n, x, &fx, g, &step, d, xp, gp, &step_min, &step_max, &cd, &param);
+                }
 
                 if (ls < 0)
                 {
@@ -1471,6 +1619,9 @@ namespace lbfgs
         case LBFGSERR_INCORRECT_TMINMAX:
             return "A logic error occurred; alternatively, the interval of uncertainty"
                    " became too small.";
+
+        case LBFGSERR_INVALID_FUNCVAL:
+            return "The function value became NaN or Inf.";
 
         case LBFGSERR_ROUNDING_ERROR:
             return "A rounding error occurred; alternatively, no line-search step"
