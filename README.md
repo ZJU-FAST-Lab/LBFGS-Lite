@@ -3,7 +3,7 @@ A header-only LBFGS unconstrained optimizer.
 
 ## 0. About
 
-__LBFGS-Lite__ is a __C/C++__ [__header-only__](https://en.wikipedia.org/wiki/Header-only) library for __unconstrained optimization__ on __twice continuously differentiable (C2) functions__ or __nonsmooth piecewise C2 functions__. The code is modified from [__liblbfgs__](https://github.com/chokkan/liblbfgs). Only necessary part is preserved for simplicity. Some engineering considerations are also added for improved robustness.
+__LBFGS-Lite__ is a __C/C++__ [__header-only__](https://en.wikipedia.org/wiki/Header-only) library for __unconstrained optimization__ on __twice continuously differentiable (C2) functions__ or __nonsmooth but piecewise C2 continuous functions__. The code is modified from [__liblbfgs__](https://github.com/chokkan/liblbfgs). Only necessary part is preserved for simplicity. Some engineering considerations are also added for improved robustness.
 
 ## 1. Features
 
@@ -17,7 +17,7 @@ __LBFGS-Lite__ is a __C/C++__ [__header-only__](https://en.wikipedia.org/wiki/He
 
 - The library provides an additional callback to utilize externally provided maximum feasible stepsize. It can be helpful when the [function is closed on a bounded open domain](https://en.wikipedia.org/wiki/Closed_convex_function) instead of the whole Euclidean space. The callback avoids function evaluations at infeasible region. This can help a lot for closed functions as long as the Newton step is not always clipped.
 
-- Supports for nonsmooth piecewise C2 functions as proposed by [Lewis and Overton](https://link.springer.com/article/10.1007/s10107-012-0514-2) with a minor modification.
+- Supports for nonsmooth functions as proposed by [Lewis and Overton](https://link.springer.com/article/10.1007/s10107-012-0514-2) with a minor modification.
 
 - Engineering features such as skipping update at extremely small curvature and lower safeguarding for ill-conditioned cases are also adopted.
 
