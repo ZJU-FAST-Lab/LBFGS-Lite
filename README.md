@@ -11,7 +11,7 @@ __LBFGS-Lite__ is a __C/C++__ [__header-only__](https://en.wikipedia.org/wiki/He
 
 - No dependencies except C/C++ standard library.
 
-- The library is an implementation of [__Limited-Memory Broyden-Fletcher-Goldfarb-Shanno__](https://doi.org/10.1007/BF01589116) (LBFGS) with [weak or strong Wolfe or conditions](https://en.wikipedia.org/wiki/Wolfe_conditions) for smooth or nonsmooth functions.
+- The library is an implementation of [__Limited-Memory Broyden-Fletcher-Goldfarb-Shanno__](https://doi.org/10.1007/BF01589116) (LBFGS) with [weak or strong Wolfe conditions](https://en.wikipedia.org/wiki/Wolfe_conditions) for smooth functions and the weak Wolfe condition for nonsmooth functions.
 
 - The objective function is required to be at least __C0 but piecewise C2__ on its domain.
 
