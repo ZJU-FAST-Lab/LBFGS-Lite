@@ -3,7 +3,7 @@ A header-only LBFGS unconstrained optimizer.
 
 ## 0. About
 
-__LBFGS-Lite__ is a __C/C++__ [__header-only__](https://en.wikipedia.org/wiki/Header-only) library for __unconstrained optimization__ on __twice continuously differentiable (C2) functions__ or __nonsmooth but continuous and piecewise C2 functions__. The code is modified from [__liblbfgs__](https://github.com/chokkan/liblbfgs). Only necessary part is preserved for simplicity. Some engineering considerations are also added for improved robustness.
+__LBFGS-Lite__ is a __C/C++__ [__header-only__](https://en.wikipedia.org/wiki/Header-only) library for __unconstrained optimization__ on __twice differentiable (C2) functions__ or __nonsmooth (C0 but piecewise C2) functions__. The code is modified from [__liblbfgs__](https://github.com/chokkan/liblbfgs). Only necessary part is preserved for simplicity. Some engineering considerations are also added for improved robustness.
 
 ## 1. Features
 
@@ -11,9 +11,9 @@ __LBFGS-Lite__ is a __C/C++__ [__header-only__](https://en.wikipedia.org/wiki/He
 
 - No dependencies except C/C++ standard library.
 
-- The library is an implementation of [__Limited-Memory Broyden-Fletcher-Goldfarb-Shanno__](https://doi.org/10.1007/BF01589116) (LBFGS) with [__More-Thuente Line Search__](https://doi.org/10.1145/192115.192132) to ensure linear time/space complexity and [strong Wolfe conditions](https://en.wikipedia.org/wiki/Wolfe_conditions) in each iteration.
+- The library is an implementation of [__Limited-Memory Broyden-Fletcher-Goldfarb-Shanno__](https://doi.org/10.1007/BF01589116) (LBFGS) with [weak or strong Wolfe or conditions](https://en.wikipedia.org/wiki/Wolfe_conditions) for smooth or nonsmooth functions.
 
-- The objective function is required to be __twice continuously differentiable__ on its domain.
+- The objective function is required to be at least __C0 but piecewise C2__ on its domain.
 
 - The library provides an additional callback to utilize externally provided maximum feasible stepsize. It can be helpful when the [function is closed on a bounded open domain](https://en.wikipedia.org/wiki/Closed_convex_function) instead of the whole Euclidean space. The callback avoids function evaluations at infeasible region. This can help a lot for closed functions as long as the Newton step is not always clipped.
 
