@@ -591,7 +591,7 @@ namespace lbfgs
             {
                 return LBFGSERR_INVALID_FUNCVAL;
             }
-            /* Check the weak Armijo condition. */
+            /* Check the Armijo condition. */
             if (*f > finit + *stp * dgtest)
             {
                 nu = *stp;
