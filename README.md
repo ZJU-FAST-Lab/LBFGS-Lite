@@ -27,7 +27,7 @@ __LBFGS-Lite__ is a __C/C++__ [__header-only__](https://en.wikipedia.org/wiki/He
 
 See "lbfgs_sample.cpp" for the procedure. See comments in "lbfgs.hpp" for detailed explainations.
 
-Note: If your objective function is really bad (ill-conditioned and just C0), just set line_search_type = 0 and pass only the correct subgradient.
+Note: If your objective function is really bad (ill-conditioned C0), just set line_search_type = 0 and pass the correct subgradient.
 
 ## 3. Planned features
 
