@@ -1428,7 +1428,7 @@ namespace lbfgs
                 /*
                 Test for stopping criterion.
                 The criterion is given by the following formula:
-                |f(past_x) - f(x)| / max(1, f(x)) < \delta
+                |f(past_x) - f(x)| / max(1, |f(x)|) < \delta
                 */
                 if (pf != NULL)
                 {
