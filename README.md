@@ -3,7 +3,7 @@ A header-only LBFGS unconstrained optimizer.
 
 ## 0. About
 
-__LBFGS-Lite__ is a __C/C++__ [__header-only__](https://en.wikipedia.org/wiki/Header-only) library for __unconstrained optimization__ on __twice continuously differentiable (C2) functions__ or __nonsmooth (C0 but piecewise C2) functions__. The code is modified from [__liblbfgs__](https://github.com/chokkan/liblbfgs). Only necessary part is preserved for simplicity. Many engineering considerations are also added to improve its robustness over the initial FORTRAN version by Nocedal.
+__LBFGS-Lite__ is a __C/C++__ [__header-only__](https://en.wikipedia.org/wiki/Header-only) library for __unconstrained optimization__ on __twice continuously differentiable (C2) functions__ or __nonsmooth (C0 but piecewise C2) functions__. The code is modified from [__liblbfgs__](https://github.com/chokkan/liblbfgs). Only necessary part is preserved for simplicity. Many engineering considerations are also added to improve its robustness over the initial version by Nocedal.
 
 ## 1. Features
 
