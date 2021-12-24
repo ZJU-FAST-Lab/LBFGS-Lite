@@ -33,7 +33,7 @@ namespace lbfgs
          *  This parameter determines the accuracy with which the solution is to
          *  be found. A minimization terminates when
          *      ||g|| < g_epsilon * max(1, ||x||),
-         *  where ||.|| denotes the Euclidean (L2) norm. The default value is 1e-5.
+         *  where ||.|| denotes the Euclidean (L2) norm. The default value is 1.0e-5.
          *  DO NOT use this parameter to test convergence for nonsmooth functions.
          */
         double g_epsilon;
@@ -43,7 +43,7 @@ namespace lbfgs
          *  This parameter determines the distance, in iterations, to compute
          *  the rate of decrease of the objective function. If the value of this
          *  parameter is zero, the library does not perform the delta-based
-         *  convergence test. The default value is 0.
+         *  convergence test. The default value is 3.
          */
         int past;
 
@@ -52,10 +52,10 @@ namespace lbfgs
          *  This parameter determines the minimum rate of decrease of the
          *  objective function. The library stops iterations when the
          *  following condition is met:
-         *      |f' - f| / f < delta,
+         *      |f' - f| / max(1, |f|) < delta,
          *  where f' is the objective value of past iterations ago, and f is
          *  the objective value of the current iteration.
-         *  The default value is 1e-5.
+         *  The default value is 1.0e-6.
          */
         double delta;
 
@@ -78,7 +78,7 @@ namespace lbfgs
 
         /**
          * The minimum step of the line search routine.
-         *  The default value is 1e-20. This value need not be modified unless
+         *  The default value is 1.0e-20. This value need not be modified unless
          *  the exponents are too large for the machine being used, or unless the
          *  problem is extremely badly scaled (in which case the exponents should
          *  be increased).
@@ -87,7 +87,7 @@ namespace lbfgs
 
         /**
          * The maximum step of the line search.
-         *  The default value is 1e+20. This value need not be modified unless
+         *  The default value is 1.0e+20. This value need not be modified unless
          *  the exponents are too large for the machine being used, or unless the
          *  problem is extremely badly scaled (in which case the exponents should
          *  be increased).
@@ -96,7 +96,7 @@ namespace lbfgs
 
         /**
          * A parameter to control the accuracy of the line search routine.
-         *  The default value is 1e-4. This parameter should be greater
+         *  The default value is 1.0e-4. This parameter should be greater
          *  than zero and smaller than 0.5.
          */
         double f_dec_coeff;
@@ -108,13 +108,13 @@ namespace lbfgs
          *  iteration (which is sometimes the case when solving very large
          *  problems) it may be advantageous to set this parameter to a small
          *  value. A typical small value is 0.1. This parameter should be
-         *  greater than the f_dec_coeff parameter (1e-4) 
+         *  greater than the f_dec_coeff parameter (1.0e-4) 
          *  and smaller than 1.0.
          */
         double s_curv_coeff;
 
         /**
-         * The machine precision for floating-point values. The default is 1e-16. 
+         * The machine precision for floating-point values. The default is 1.0e-16. 
          *  This parameter must be a positive value set by a client program to
          *  estimate the machine precision. The line search routine will terminate
          *  with the status code (::LBFGSERR_ROUNDING_ERROR) if the relative width
@@ -161,8 +161,8 @@ namespace lbfgs
     static const lbfgs_parameter_t _default_param = {
         8,
         1.0e-5,
-        0,
-        1.0e-5,
+        3,
+        1.0e-6,
         0,
         60,
         1.0e-20,
@@ -318,7 +318,6 @@ namespace lbfgs
     /**
      * Callback data struct
      */
-
     struct callback_data_t
     {
         int n;
@@ -432,7 +431,7 @@ namespace lbfgs
      */
 #define QUAD_MINIMIZER_LBFGS(qm, u, fu, du, v, fv) \
     a = (v) - (u);                                 \
-    (qm) = (u) + (du) / (((fu) - (fv)) / a + (du)) / 2.0 * a;
+    (qm) = (u) + (du) / (((fu) - (fv)) / a + (du)) * 0.5 * a;
 
     /**
      * Find a minimizer of an interpolated quadratic function.
@@ -448,12 +447,7 @@ namespace lbfgs
 
     inline void *vecalloc(size_t size)
     {
-        void *memblock = malloc(size);
-        if (memblock)
-        {
-            memset(memblock, 0, size);
-        }
-        return memblock;
+        return malloc(size);
     }
 
     inline void vecfree(void *memblock)
@@ -1176,10 +1170,12 @@ namespace lbfgs
      * 
      * In this formula, ||.|| denotes the Euclidean norm.
      *
-     *  @param  n           The number of variables.
-     *  @param  x           The array of variables. A client program can set
-     *                      default values for the optimization and receive the
-     *                      optimization result through this array.
+     *  @param  n           The number of decision variables.
+     *  @param  x           The array of decision variables. 
+     *                      THE INITIAL GUESS SHOULD BE SET BEFORE THIS CALL!
+     *                      A client program can receive decision variables 
+     *                      through this array, at which the objective and its 
+     *                      gradient are queried during optimization.
      *  @param  ptr_fx      The pointer to the variable that receives the final
      *                      value of the objective function for the variables.
      *                      This argument can be set to NULL if the final
@@ -1362,6 +1358,10 @@ namespace lbfgs
 
             while (loop == 1)
             {
+                /* Store the current position, gradient vectors and initial step. */
+                veccpy(xp, x, n);
+                veccpy(gp, g, n);
+
                 /* If the step bound can be provied dynamically, then apply it. */
                 step_min = param.min_step;
                 step_max = param.max_step;
@@ -1374,10 +1374,6 @@ namespace lbfgs
                         step = 0.5 * step_max;
                     }
                 }
-
-                /* Store the current position, gradient vectors and initial step. */
-                veccpy(xp, x, n);
-                veccpy(gp, g, n);
 
                 /* Search for an optimal step. */
                 if (param.line_search_type)
@@ -1432,7 +1428,7 @@ namespace lbfgs
                 /*
                 Test for stopping criterion.
                 The criterion is given by the following formula:
-                |f(past_x) - f(x)| / f(x) < \delta
+                |f(past_x) - f(x)| / max(1, f(x)) < \delta
                 */
                 if (pf != NULL)
                 {
@@ -1440,10 +1436,12 @@ namespace lbfgs
                     if (param.past <= k)
                     {
                         /* Compute the relative improvement from the past. */
-                        rate = (pf[k % param.past] - fx) / fx;
+                        rate = fabs(fx);
+                        rate = rate > 1.0 ? 1.0 / rate : 1.0;
+                        rate *= fabs(pf[k % param.past] - fx);
 
                         /* The stopping criterion. */
-                        if (fabs(rate) < param.delta)
+                        if (rate < param.delta)
                         {
                             ret = LBFGS_STOP;
                             break;
