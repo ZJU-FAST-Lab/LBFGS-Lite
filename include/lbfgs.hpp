@@ -1221,7 +1221,6 @@ namespace lbfgs
         int ret;
         int i, j, k, ls, end, bound;
         double step;
-        int loop;
         double step_min, step_max;
 
         /* Constant parameters and their default values. */
@@ -1354,9 +1353,8 @@ namespace lbfgs
 
             k = 1;
             end = 0;
-            loop = 1;
 
-            while (loop == 1)
+            while (1)
             {
                 /* Store the current position, gradient vectors and initial step. */
                 veccpy(xp, x, n);
@@ -1391,8 +1389,7 @@ namespace lbfgs
                     veccpy(x, xp, n);
                     veccpy(g, gp, n);
                     ret = ls;
-                    loop = 0;
-                    continue;
+                    break;
                 }
 
                 /* Compute x and g norms. */
@@ -1404,8 +1401,7 @@ namespace lbfgs
                 {
                     if ((ret = cd.proc_progress(cd.instance, x, g, fx, xnorm, gnorm, step, cd.n, k, ls)))
                     {
-                        loop = 0;
-                        continue;
+                        break;
                     }
                 }
 
