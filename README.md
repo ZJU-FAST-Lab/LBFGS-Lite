@@ -7,7 +7,7 @@ __LBFGS-Lite__ is a __C++__ [__header-only__](https://en.wikipedia.org/wiki/Head
 
 ## 1. How to use
 
-All explainations are detailed by the comments in "lbfgs.hpp". See "lbfgs_example.cpp" for the calling procedure. You may need to install Eigen via "sudo apt install libeigen3-dev" becuase we use Eigen for a better performance since ver. 2.1. If you need a pure C-style lib without any external dependence, please refer to ver. 1.9.
+All explainations are detailed by the comments in "lbfgs.hpp". See "lbfgs_example.cpp" for the calling procedure. You may need to install Eigen via "sudo apt install libeigen3-dev" becuase we use Eigen for a better performance since [ver. 2.1](https://github.com/ZJU-FAST-Lab/LBFGS-Lite/tags). If you need a pure C-style lib without any external dependence, please refer to [ver. 1.9](https://github.com/ZJU-FAST-Lab/LBFGS-Lite/tags).
 
 ## 2. Features
 
@@ -15,7 +15,7 @@ All explainations are detailed by the comments in "lbfgs.hpp". See "lbfgs_exampl
 
 - The library implements [Limited-Memory Broyden-Fletcher-Goldfarb-Shanno](https://doi.org/10.1007/BF01589116) (L-BFGS).
 
-- A __highly robust line search__ proposed by [Lewis and Overton](https://link.springer.com/article/10.1007/s10107-012-0514-2) is employed since ver. 2.1.
+- A __highly robust line search__ proposed by [Lewis and Overton](https://link.springer.com/article/10.1007/s10107-012-0514-2) is employed since [ver. 2.1](https://github.com/ZJU-FAST-Lab/LBFGS-Lite/tags).
 
 - Both __smooth__ ([C2](https://en.wikipedia.org/wiki/Smoothness)) and __nonsmooth__ ([C0 but piecewise C2](https://en.wikipedia.org/wiki/Smoothness)) functions are supported.
 
@@ -33,7 +33,7 @@ All explainations are detailed by the comments in "lbfgs.hpp". See "lbfgs_exampl
 
 - We use [Lewis-Overton line search](https://link.springer.com/article/10.1007/s10107-012-0514-2) as the only scheme since ver. 2.0 from which nonsmooth functions are supported. Other schemes either assume high orders of continuity, or enforce the strong Wolfe condition can never be fulfilled by nonsmooth functions. Moreover, Lewis-Overton line search are widely adopted in many graphics applications involving optimization on [scene](https://dl.acm.org/doi/abs/10.1145/2766929), [shape](https://dl.acm.org/doi/abs/10.1145/2897824.2925918), or [mesh](https://dl.acm.org/doi/abs/10.1145/3197517.3201303), showing its practical robustness.
 
-- According to our practice, the function/gradient evaluation numbers are comparable with interpolation-based schemes. Sometimes it even requires less function calls. If you insist an interpolation-one for smooth well-shaped cost function, we also propose our ver. 1.9 where a More-Thuente line search is kept.
+- According to our practice, the function/gradient evaluation numbers are comparable with interpolation-based schemes. Sometimes it even requires less function calls. If you insist an interpolation-one for smooth well-shaped cost function, we also propose our [ver. 1.9](https://github.com/ZJU-FAST-Lab/LBFGS-Lite/tags) where a More-Thuente line search is kept.
 
 - Other schemes' global convergence on non-convex functions are not guaranteed theoretically. We avoid the potential problems by employing the [cautious update](https://epubs.siam.org/doi/pdf/10.1137/S1052623499354242) scheme in our lib without additional computation overhead.
 
