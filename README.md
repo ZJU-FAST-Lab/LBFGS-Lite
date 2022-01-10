@@ -13,7 +13,7 @@ All explainations are detailed by the comments in "lbfgs.hpp". See "lbfgs_exampl
 
 - Only one header file "lbfgs.hpp" is all you need.
 
-- The library implements [Limited-Memory Broyden-Fletcher-Goldfarb-Shanno](https://doi.org/10.1007/BF01589116) (L-BFGS).
+- The library implements [Limited-Memory Broyden-Fletcher-Goldfarb-Shanno Method](https://doi.org/10.1007/BF01589116) (L-BFGS).
 
 - A __highly robust line search__ proposed by [Lewis and Overton](https://link.springer.com/article/10.1007/s10107-012-0514-2) is employed since [ver. 2.1](https://github.com/ZJU-FAST-Lab/LBFGS-Lite/tags).
 
