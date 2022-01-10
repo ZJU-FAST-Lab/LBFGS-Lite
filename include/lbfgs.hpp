@@ -256,7 +256,6 @@ namespace lbfgs
      */
     struct callback_data_t
     {
-        int n;
         void *instance = nullptr;
         lbfgs_evaluate_t proc_evaluate = nullptr;
         lbfgs_stepbound_t proc_stepbound = nullptr;
@@ -519,7 +518,6 @@ namespace lbfgs
 
         /* Construct a callback data. */
         callback_data_t cd;
-        cd.n = n;
         cd.instance = instance;
         cd.proc_evaluate = proc_evaluate;
         cd.proc_stepbound = proc_stepbound;
