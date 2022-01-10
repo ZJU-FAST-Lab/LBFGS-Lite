@@ -3,43 +3,43 @@ A header-only LBFGS unconstrained optimizer.
 
 ## 0. About
 
-__LBFGS-Lite__ is a __C/C++__ [__header-only__](https://en.wikipedia.org/wiki/Header-only) library for __unconstrained optimization__ on __twice continuously differentiable (C2) functions__ or __nonsmooth (C0 but piecewise C2) functions__. The code is modified from [__liblbfgs__](https://github.com/chokkan/liblbfgs). Only necessary part is preserved for simplicity. Many engineering considerations are also added to improve its robustness over the initial version by Nocedal.
+__LBFGS-Lite__ is a __C++__ [__header-only__](https://en.wikipedia.org/wiki/Header-only) library for __unconstrained optimization__. Many engineering considerations are added for improved robustness in comparison with the original version by Nocedal.
 
-## 1. Features
+## 1. How to use
 
-- Only one header file "lbfgs.hpp" is required for usage.
+All explainations are detailed by the comments in "lbfgs.hpp". See "lbfgs_example.cpp" for the calling procedure. You may need to install Eigen via "sudo apt install libeigen3-dev" becuase we use Eigen for a better performance since ver. 2.1. If you need a pure C-style lib without any external dependence, please refer to ver. 1.9.
 
-- No dependencies except C/C++ standard library.
+## 2. Features
 
-- The library is an implementation of [__Limited-Memory Broyden-Fletcher-Goldfarb-Shanno__](https://doi.org/10.1007/BF01589116) (LBFGS) with [weak or strong Wolfe conditions](https://en.wikipedia.org/wiki/Wolfe_conditions) for smooth functions and the weak Wolfe condition for nonsmooth functions.
+- Only one header file "lbfgs.hpp" is all you need.
 
-- The objective function is required to be at least __C0 but piecewise C2__ on its domain.
+- The library implements [Limited-Memory Broyden-Fletcher-Goldfarb-Shanno](https://doi.org/10.1007/BF01589116) (L-BFGS).
 
-- The library provides an additional callback to utilize externally provided maximum feasible stepsize. It can be helpful when the [function is closed on a bounded open domain](https://en.wikipedia.org/wiki/Closed_convex_function) instead of the whole Euclidean space. The callback avoids function evaluations at infeasible region. This can help a lot for closed functions as long as the Newton step is not always clipped.
+- A __highly robust line search__ proposed by [Lewis and Overton](https://link.springer.com/article/10.1007/s10107-012-0514-2) is employed since ver. 2.1.
 
-- Supports for nonsmooth functions as proposed by [Lewis and Overton](https://link.springer.com/article/10.1007/s10107-012-0514-2) with a minor modification.
+- Both __smooth__ ([C2](https://en.wikipedia.org/wiki/Smoothness)) and __nonsmooth__ ([C0 but piecewise C2](https://en.wikipedia.org/wiki/Smoothness)) functions are supported.
 
-- Engineering features such as skipping update at extremely small curvature and lower safeguarding for ill-conditioned cases are also adopted.
+- __Cautious update__ by [Li and Fukushima](https://epubs.siam.org/doi/pdf/10.1137/S1052623499354242) is employed for __global convergence__ in nonconvex cases.
 
-- Instruction set dependent parts and L1 regularization parts in original code are removed. Multiple files are reorgainzed here with some additional modification.
+- __Externally provided maximum step size__ is convenient to functions defined on bounded sets.
 
-## 2. How to use
+## 3. Why this lib
 
-See "lbfgs_sample.cpp" for the procedure. See comments in "lbfgs.hpp" for detailed explainations.
+- Our lib is well-organized and concise (about 800 line).
 
-Note: If your objective function is really bad (ill-conditioned C0), just set line_search_type = 0 and pass the correct subgradient.
+- Many other libs use [Nocedal's zoom line search](https://link.springer.com/book/10.1007%2F978-0-387-40065-5), [More-Thuente line search](https://dl.acm.org/doi/abs/10.1145/192115.192132), or [Hager-Zhang line search](https://doi.org/10.1137/030601880). The truth is, interpolation-based schemes bring many tunable parameters and make more or less assumptions on the function smoothness. Engineering practice tells us that these assumptions can fail due to bad numerical conditions and ill-shaped functions. Admittedly, they slightly reduce the iteration number in some cases, but also easily-crashed.
 
-## 3. Planned features
+- Some other libs provide options for [Armijo and weak/strong Wolfe condition](https://en.wikipedia.org/wiki/Wolfe_conditions) without considering positive definiteness (PD) of the approximated Hessian. This is misleading because if only Armijo condition is satisfied, the PD property is not guaranteed and the solver is unstable or easily-crashed. We make the weak Wolfe condition mandatory here, which suffices for PD property.
 
-- LBFGS is only proved to be globally convergent (convergent to stationaries for any initial guess) under convexity assumption, while it also works in many nonconvex cases and yields almost the best results. Slight modification in updating can ensure global convergence without convexity assumption, following a work by [Fukushima and Li](https://doi.org/10.1016/S0377-0427(00)00540-9).
+- We use [Lewis-Overton line search](https://link.springer.com/article/10.1007/s10107-012-0514-2) as the only scheme since ver. 2.0 from which nonsmooth functions are supported. Other schemes either assume high orders of continuity, or enforce the strong Wolfe condition can never be fulfilled by nonsmooth functions. Moreover, Lewis-Overton line search are widely adopted in many graphics applications involving optimization on [scene](https://dl.acm.org/doi/abs/10.1145/2766929), [shape](https://dl.acm.org/doi/abs/10.1145/2897824.2925918), or [mesh](https://dl.acm.org/doi/abs/10.1145/3197517.3201303), showing its practical robustness.
 
-- Although Lewis-Overton line search and More-Thuente line search are already good enough, we plan to compare them with [Hager-Zhang line search](https://doi.org/10.1137/030601880) and [Nocedal's zoom line search](https://link.springer.com/book/10.1007%2F978-0-387-40065-5). Hager-Zhang linear search is reported to be full machine accuracy while More-Thuente's method can only attain the half. Nocedal's zoom is also reported to be reliable. We will compare them and choose the best one if the improvement is good enough.
+- According to our practice, the function/gradient evaluation numbers are comparable with interpolation-based schemes. Sometimes it even requires less function calls. If you insist an interpolation-one for smooth well-shaped cost function, we also propose our ver. 1.9 where a More-Thuente line search is kept.
 
-- Further code optimization (instruction set independent) and reorganization.
+- Other schemes' global convergence on non-convex functions are not guaranteed theoretically. We avoid the potential problems by employing the [cautious update](https://epubs.siam.org/doi/pdf/10.1137/S1052623499354242) scheme in our lib without additional computation overhead.
 
 ## 6. Licence
 
-LBFGS-Lite is distributed under the term of the MIT license according the previous version by Okazaki and the initial FORTRAN version by Nocedal. Please refer to LICENSE file in the distribution.
+LBFGS-Lite is modified from [the C version](https://github.com/chokkan/liblbfgs) by Okazaki, which is further based on [the original Fortran version](https://doi.org/10.1007/BF01589116) by Nocedal. Thus it is distributed under the term of the MIT license according to previous ones by Okazaki and by Nocedal. Please refer to LICENSE file in the distribution.
 
 ## 7. Maintaince
 
