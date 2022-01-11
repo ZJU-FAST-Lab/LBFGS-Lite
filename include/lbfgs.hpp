@@ -30,8 +30,8 @@ namespace lbfgs
          *  DO NOT use this parameter to test convergence for nonsmooth functions.
          *  This parameter determines the accuracy with which the solution is to
          *  be found. A minimization terminates when
-         *      ||g|| < g_epsilon * max(1, ||x||),
-         *  where ||.|| denotes the Euclidean (L2) norm. The default value is 1.0e-5.
+         *      ||g(x)||_inf / max(1, ||x||_inf) < max(g_epsilon, machine_prec),
+         *  where ||.||_inf is the infinity norm. The default value is 1.0e-5.
          */
         double g_epsilon = 1.0e-5;
 
@@ -110,13 +110,6 @@ namespace lbfgs
         double s_curv_coeff = 0.9;
 
         /**
-         * The machine precision for floating-point values. The default is 1.0e-16. 
-         *  This parameter must be a positive value set by a client program to
-         *  estimate the machine precision.
-         */
-        double xtol = 1.0e-16;
-
-        /**
          * A parameter to ensure the global convergence for nonconvex functions.
          *  The default value is 1.0e-6. The parameter performs the so called 
          *  cautious update for L-BFGS, especially when the convergence is 
@@ -124,6 +117,13 @@ namespace lbfgs
          *  be less than 1.0e-3 in practice.
          */
         double cautious_factor = 1.0e-6;
+
+        /**
+         * The machine precision for floating-point values. The default is 1.0e-16. 
+         *  This parameter must be a positive value set by a client program to
+         *  estimate the machine precision.
+         */
+        double machine_prec = 1.0e-16;
     };
 
     /**
@@ -161,8 +161,8 @@ namespace lbfgs
         LBFGSERR_INVALID_FDECCOEFF,
         /** Invalid parameter lbfgs_parameter_t::s_curv_coeff specified. */
         LBFGSERR_INVALID_SCURVCOEFF,
-        /** Invalid parameter lbfgs_parameter_t::xtol specified. */
-        LBFGSERR_INVALID_XTOL,
+        /** Invalid parameter lbfgs_parameter_t::machine_prec specified. */
+        LBFGSERR_INVALID_MACHINEPREC,
         /** Invalid parameter lbfgs_parameter_t::max_linesearch specified. */
         LBFGSERR_INVALID_MAXLINESEARCH,
         /** The function value became NaN or Inf. */
@@ -176,7 +176,7 @@ namespace lbfgs
         LBFGSERR_MAXIMUMLINESEARCH,
         /** The algorithm routine reaches the maximum number of iterations. */
         LBFGSERR_MAXIMUMITERATION,
-        /** Relative search interval width is at least lbfgs_parameter_t::xtol. */
+        /** Relative search interval width is at least lbfgs_parameter_t::machine_prec. */
         LBFGSERR_WIDTHTOOSMALL,
         /** A logic error (negative line-search step) occurred. */
         LBFGSERR_INVALIDPARAMETERS,
@@ -234,8 +234,6 @@ namespace lbfgs
      *  @param  x           The current values of variables.
      *  @param  g           The current gradient values of variables.
      *  @param  fx          The current value of the cost function.
-     *  @param  xnorm       The Euclidean norm of the variables.
-     *  @param  gnorm       The Euclidean norm of the gradients.
      *  @param  step        The line-search step used for this iteration.
      *  @param  k           The iteration count.
      *  @param  ls          The number of evaluations called for this iteration.
@@ -246,8 +244,6 @@ namespace lbfgs
                                     const Eigen::VectorXd &x,
                                     const Eigen::VectorXd &g,
                                     const double fx,
-                                    const double xnorm,
-                                    const double gnorm,
                                     const double step,
                                     const int k,
                                     const int ls);
@@ -362,9 +358,9 @@ namespace lbfgs
                 /* Maximum number of iteration. */
                 return LBFGSERR_MAXIMUMLINESEARCH;
             }
-            if (brackt && (nu - mu) < param.xtol * nu)
+            if (brackt && (nu - mu) < param.machine_prec * nu)
             {
-                /* Relative interval width is at least xtol. */
+                /* Relative interval width is at least machine_prec. */
                 return LBFGSERR_WIDTHTOOSMALL;
             }
 
@@ -410,7 +406,7 @@ namespace lbfgs
      * arguments. Similarly, a user can implement a function compatible with 
      * ::lbfgs_stepbound_t to provide an external upper bound for stepsize, and 
      * ::lbfgs_progress_t (progress callback) to obtain the current progress 
-     * (e.g., variables, function value, ||g||, etc) and to cancel the iteration 
+     * (e.g., variables, function, and gradient, etc) and to cancel the iteration 
      * process if necessary. Implementation of the stepbound and the progress callback 
      * is optional: a user can pass nullptr if progress notification is not necessary.
      * 
@@ -456,7 +452,7 @@ namespace lbfgs
     {
         int ret, i, j, k, ls, end, bound;
         double step, step_min, step_max, fx, ys, yy;
-        double xnorm, gnorm, gpnorm, beta, rate, cau;
+        double gnorm_inf, xnorm_inf, g_prec, beta, rate, cau;
 
         const int n = x.size();
         const int m = param.mem_size;
@@ -490,17 +486,19 @@ namespace lbfgs
         {
             return LBFGSERR_INVALID_MAXSTEP;
         }
-        if (!(param.f_dec_coeff > 0.0 && param.f_dec_coeff < 1.0))
+        if (!(param.f_dec_coeff > 0.0 &&
+              param.f_dec_coeff < 1.0))
         {
             return LBFGSERR_INVALID_FDECCOEFF;
         }
-        if (!(param.s_curv_coeff > param.f_dec_coeff && param.s_curv_coeff < 1.0))
+        if (!(param.s_curv_coeff < 1.0 &&
+              param.s_curv_coeff > param.f_dec_coeff))
         {
             return LBFGSERR_INVALID_SCURVCOEFF;
         }
-        if (param.xtol < 0.0)
+        if (!(param.machine_prec > 0.0))
         {
-            return LBFGSERR_INVALID_XTOL;
+            return LBFGSERR_INVALID_MACHINEPREC;
         }
         if (param.max_linesearch <= 0)
         {
@@ -544,10 +542,11 @@ namespace lbfgs
         /*
         Make sure that the initial variables are not a minimizer.
         */
-        xnorm = x.norm();
-        gnorm = g.norm();
+        gnorm_inf = g.cwiseAbs().maxCoeff();
+        xnorm_inf = x.cwiseAbs().maxCoeff();
+        g_prec = std::max(param.g_epsilon, param.machine_prec);
 
-        if (gnorm / std::max(1.0, xnorm) < param.g_epsilon)
+        if (gnorm_inf / std::max(1.0, xnorm_inf) < g_prec)
         {
             ret = LBFGS_ALREADY_MINIMIZED;
         }
@@ -567,7 +566,6 @@ namespace lbfgs
                 /* Store the current position and gradient vectors. */
                 xp = x;
                 gp = g;
-                gpnorm = gnorm;
 
                 /* If the step bound can be provied dynamically, then apply it. */
                 step_min = param.min_step;
@@ -591,14 +589,10 @@ namespace lbfgs
                     break;
                 }
 
-                /* Compute x and g norms. */
-                xnorm = x.norm();
-                gnorm = g.norm();
-
                 /* Report the progress. */
                 if (cd.proc_progress)
                 {
-                    if (cd.proc_progress(cd.instance, x, g, fx, xnorm, gnorm, step, k, ls))
+                    if (cd.proc_progress(cd.instance, x, g, fx, step, k, ls))
                     {
                         ret = LBFGS_CANCELED;
                         break;
@@ -608,9 +602,11 @@ namespace lbfgs
                 /*
                 Convergence test.
                 The criterion is given by the following formula:
-                |g(x)| / \max(1, |x|) < g_epsilon
+                ||g(x)||_inf / max(1, ||x||_inf) < max(g_epsilon, machine_prec)
                 */
-                if (gnorm / std::max(1.0, xnorm) < param.g_epsilon)
+                gnorm_inf = g.cwiseAbs().maxCoeff();
+                xnorm_inf = x.cwiseAbs().maxCoeff();
+                if (gnorm_inf / std::max(1.0, xnorm_inf) < g_prec)
                 {
                     /* Convergence. */
                     ret = LBFGS_CONVERGENCE;
@@ -629,6 +625,7 @@ namespace lbfgs
                     {
                         /* The stopping criterion. */
                         rate = std::fabs(pf(k % param.past) - fx) / std::max(1.0, std::fabs(fx));
+
                         if (rate < param.delta)
                         {
                             ret = LBFGS_STOP;
@@ -683,7 +680,7 @@ namespace lbfgs
                 the BFGS method for nonconvex unconstrained optimization problems. 
                 SIAM Journal on Optimization, Vol 11, No 4, pp. 1054-1064, 2011.
                 */
-                cau = lm[end].s.squaredNorm() * gpnorm * param.cautious_factor;
+                cau = lm[end].s.squaredNorm() * gp.norm() * param.cautious_factor;
 
                 if (ys > cau)
                 {
@@ -785,8 +782,8 @@ namespace lbfgs
         case LBFGSERR_INVALID_SCURVCOEFF:
             return "Invalid parameter lbfgs_parameter_t::s_curv_coeff specified.";
 
-        case LBFGSERR_INVALID_XTOL:
-            return "Invalid parameter lbfgs_parameter_t::xtol specified.";
+        case LBFGSERR_INVALID_MACHINEPREC:
+            return "Invalid parameter lbfgs_parameter_t::machine_prec specified.";
 
         case LBFGSERR_INVALID_MAXLINESEARCH:
             return "Invalid parameter lbfgs_parameter_t::max_linesearch specified.";
@@ -807,7 +804,7 @@ namespace lbfgs
             return "The algorithm routine reaches the maximum number of iterations.";
 
         case LBFGSERR_WIDTHTOOSMALL:
-            return "Relative search interval width is at least lbfgs_parameter_t::xtol.";
+            return "Relative search interval width is at least lbfgs_parameter_t::machine_prec.";
 
         case LBFGSERR_INVALIDPARAMETERS:
             return "A logic error (negative line-search step) occurred.";

@@ -66,8 +66,6 @@ private:
                                const Eigen::VectorXd &x,
                                const Eigen::VectorXd &g,
                                const double fx,
-                               const double xnorm,
-                               const double gnorm,
                                const double step,
                                const int k,
                                const int ls)
@@ -76,7 +74,7 @@ private:
                   << "================================" << std::endl
                   << "Iteration: " << k << std::endl
                   << "Function Value: " << fx << std::endl
-                  << "Gradient Norm: " << gnorm << std::endl
+                  << "Gradient Inf Norm: " << g.cwiseAbs().maxCoeff() << std::endl
                   << "Variables: " << std::endl
                   << x.transpose() << std::endl;
         return 0;
