@@ -94,7 +94,7 @@ namespace lbfgs
         /**
          * A parameter to control the accuracy of the line search routine.
          *  The default value is 1.0e-4. This parameter should be greater
-         *  than zero and smaller than 0.5.
+         *  than zero and smaller than 1.0.
          */
         double f_dec_coeff = 1.0e-4;
 
@@ -105,8 +105,7 @@ namespace lbfgs
          *  iteration (which is sometimes the case when solving very large
          *  problems) it may be advantageous to set this parameter to a small
          *  value. A typical small value is 0.1. This parameter should be
-         *  greater than the f_dec_coeff parameter (1.0e-4) 
-         *  and smaller than 1.0.
+         *  greater than the f_dec_coeff parameter and smaller than 1.0.
          */
         double s_curv_coeff = 0.9;
 
@@ -177,6 +176,8 @@ namespace lbfgs
         LBFGSERR_MAXIMUMLINESEARCH,
         /** The algorithm routine reaches the maximum number of iterations. */
         LBFGSERR_MAXIMUMITERATION,
+        /** Relative search interval width is at least lbfgs_parameter_t::xtol. */
+        LBFGSERR_WIDTHTOOSMALL,
         /** A logic error (negative line-search step) occurred. */
         LBFGSERR_INVALIDPARAMETERS,
         /** The current search direction increases the cost function value. */
@@ -306,7 +307,7 @@ namespace lbfgs
         double mu = 0.0, nu = stpmax;
 
         /* Check the input parameters for errors. */
-        if (stp <= 0.0)
+        if (!(stp > 0.0))
         {
             return LBFGSERR_INVALIDPARAMETERS;
         }
@@ -360,6 +361,11 @@ namespace lbfgs
             {
                 /* Maximum number of iteration. */
                 return LBFGSERR_MAXIMUMLINESEARCH;
+            }
+            if (brackt && (nu - mu) < param.xtol * nu)
+            {
+                /* Relative interval width is at least xtol. */
+                return LBFGSERR_WIDTHTOOSMALL;
             }
 
             if (brackt)
@@ -484,11 +490,11 @@ namespace lbfgs
         {
             return LBFGSERR_INVALID_MAXSTEP;
         }
-        if (param.f_dec_coeff < 0.0)
+        if (!(param.f_dec_coeff > 0.0 && param.f_dec_coeff < 1.0))
         {
             return LBFGSERR_INVALID_FDECCOEFF;
         }
-        if (param.s_curv_coeff <= param.f_dec_coeff || 1.0 <= param.s_curv_coeff)
+        if (!(param.s_curv_coeff > param.f_dec_coeff && param.s_curv_coeff < 1.0))
         {
             return LBFGSERR_INVALID_SCURVCOEFF;
         }
@@ -799,6 +805,9 @@ namespace lbfgs
 
         case LBFGSERR_MAXIMUMITERATION:
             return "The algorithm routine reaches the maximum number of iterations.";
+
+        case LBFGSERR_WIDTHTOOSMALL:
+            return "Relative search interval width is at least lbfgs_parameter_t::xtol.";
 
         case LBFGSERR_INVALIDPARAMETERS:
             return "A logic error (negative line-search step) occurred.";
