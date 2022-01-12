@@ -26,12 +26,15 @@ namespace lbfgs
         int mem_size = 8;
 
         /**
-         * Epsilon for grad norm convergence test.
-         *  DO NOT use this parameter to test convergence for nonsmooth functions.
+         * Epsilon for grad convergence test. DO NOT USE IT in nonsmooth cases! 
+         *  Set it to 0.0 and use past-delta-based test for nonsmooth functions.
          *  This parameter determines the accuracy with which the solution is to
          *  be found. A minimization terminates when
-         *      ||g(x)||_inf / max(1, ||x||_inf) < max(g_epsilon, machine_prec),
-         *  where ||.||_inf is the infinity norm. The default value is 1.0e-5.
+         *      ||g(x)||_inf / max(1, ||x||_inf) < g_epsilon,
+         *  where ||.||_inf is the infinity norm. The default value is 1.0e-5. 
+         *  This should be greater than 1.0e-6 in practice because L-BFGS does 
+         *  not directly reduce first-order residual. It still needs the function 
+         *  value which can be corrupted by machine_prec when ||g|| is small.
          */
         double g_epsilon = 1.0e-5;
 
@@ -136,8 +139,6 @@ namespace lbfgs
         LBFGS_CONVERGENCE = 0,
         /** L-BFGS satisfies stopping criteria. */
         LBFGS_STOP,
-        /** The initial variables already minimize the cost function. */
-        LBFGS_ALREADY_MINIMIZED,
         /** The iteration has been canceled by the monitor callback. */
         LBFGS_CANCELED,
 
@@ -171,8 +172,7 @@ namespace lbfgs
         LBFGSERR_MINIMUMSTEP,
         /** The line-search step became larger than lbfgs_parameter_t::max_step. */
         LBFGSERR_MAXIMUMSTEP,
-        /** The line-search routine reaches the maximum number of evaluations.
-         *  This is often caused by wrong gradient or discontinuous function. */
+        /** Line search reaches the maximum, assumptions not satisfied or precision not achievable.*/
         LBFGSERR_MAXIMUMLINESEARCH,
         /** The algorithm routine reaches the maximum number of iterations. */
         LBFGSERR_MAXIMUMITERATION,
@@ -399,8 +399,9 @@ namespace lbfgs
      * Start a L-BFGS optimization.
      * Assumptions: 1. f(x) is either C2 or C0 but piecewise C2;
      *              2. f(x) is lower bounded;
-     *              3. g(x) is either the gradient or subgradient;
-     *              4. The gradient exists at the initial guess x0.
+     *              3. f(x) has bounded level sets;
+     *              4. g(x) is either the gradient or subgradient;
+     *              5. The gradient exists at the initial guess x0.
      * A user must implement a function compatible with ::lbfgs_evaluate_t (evaluation
      * callback) and pass the pointer to the callback function to lbfgs_optimize() 
      * arguments. Similarly, a user can implement a function compatible with 
@@ -452,7 +453,7 @@ namespace lbfgs
     {
         int ret, i, j, k, ls, end, bound;
         double step, step_min, step_max, fx, ys, yy;
-        double gnorm_inf, xnorm_inf, g_prec, beta, rate, cau;
+        double gnorm_inf, xnorm_inf, beta, rate, cau;
 
         const int n = x.size();
         const int m = param.mem_size;
@@ -540,15 +541,15 @@ namespace lbfgs
         d = -g;
 
         /*
-        Make sure that the initial variables are not a minimizer.
+        Make sure that the initial variables are not a stationary point.
         */
         gnorm_inf = g.cwiseAbs().maxCoeff();
         xnorm_inf = x.cwiseAbs().maxCoeff();
-        g_prec = std::max(param.g_epsilon, param.machine_prec);
 
-        if (gnorm_inf / std::max(1.0, xnorm_inf) < g_prec)
+        if (gnorm_inf / std::max(1.0, xnorm_inf) < param.g_epsilon)
         {
-            ret = LBFGS_ALREADY_MINIMIZED;
+            /* The initial guess is already a stationary point. */
+            ret = LBFGS_CONVERGENCE;
         }
         else
         {
@@ -602,11 +603,11 @@ namespace lbfgs
                 /*
                 Convergence test.
                 The criterion is given by the following formula:
-                ||g(x)||_inf / max(1, ||x||_inf) < max(g_epsilon, machine_prec)
+                ||g(x)||_inf / max(1, ||x||_inf) < g_epsilon
                 */
                 gnorm_inf = g.cwiseAbs().maxCoeff();
                 xnorm_inf = x.cwiseAbs().maxCoeff();
-                if (gnorm_inf / std::max(1.0, xnorm_inf) < g_prec)
+                if (gnorm_inf / std::max(1.0, xnorm_inf) < param.g_epsilon)
                 {
                     /* Convergence. */
                     ret = LBFGS_CONVERGENCE;
@@ -718,9 +719,7 @@ namespace lbfgs
                     }
                 }
 
-                /*
-                Now the search direction d is ready. We try step = 1 first.
-                */
+                /* The search direction d is ready. We try step = 1 first. */
                 step = 1.0;
             }
         }
@@ -745,9 +744,6 @@ namespace lbfgs
 
         case LBFGS_STOP:
             return "Success: met stopping criteria (past f decrease less than delta).";
-
-        case LBFGS_ALREADY_MINIMIZED:
-            return "The initial variables already minimize the cost function.";
 
         case LBFGS_CANCELED:
             return "The iteration has been canceled by the monitor callback.";
@@ -798,7 +794,7 @@ namespace lbfgs
             return "The line-search step became larger than lbfgs_parameter_t::max_step.";
 
         case LBFGSERR_MAXIMUMLINESEARCH:
-            return "The line search reaches the maximum try number. Assumptions may not be satisfied.";
+            return "Line search reaches the maximum try number, assumptions not satisfied or precision not achievable.";
 
         case LBFGSERR_MAXIMUMITERATION:
             return "The algorithm routine reaches the maximum number of iterations.";
