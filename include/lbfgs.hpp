@@ -3,7 +3,6 @@
 
 #include <Eigen/Eigen>
 #include <cmath>
-#include <vector>
 #include <algorithm>
 
 namespace lbfgs
@@ -259,17 +258,6 @@ namespace lbfgs
         lbfgs_progress_t proc_progress = nullptr;
     };
 
-    /**
-     * Iteration data struct
-     */
-    struct iteration_data_t
-    {
-        double alpha;
-        Eigen::VectorXd s;
-        Eigen::VectorXd y;
-        double ys;
-    };
-
     // ----------------------- L-BFGS Part -----------------------
 
     /**
@@ -514,12 +502,10 @@ namespace lbfgs
         Eigen::VectorXd pf(std::max(1, param.past));
 
         /* Initialize the limited memory. */
-        iteration_data_t iter_data;
-        iter_data.alpha = 0.0;
-        iter_data.s = Eigen::VectorXd::Zero(n);
-        iter_data.y = Eigen::VectorXd::Zero(n);
-        iter_data.ys = 0.0;
-        std::vector<iteration_data_t> lm(m, iter_data);
+        Eigen::VectorXd lm_alpha = Eigen::VectorXd::Zero(m);
+        Eigen::MatrixXd lm_s = Eigen::MatrixXd::Zero(n, m);
+        Eigen::MatrixXd lm_y = Eigen::MatrixXd::Zero(n, m);
+        Eigen::VectorXd lm_ys = Eigen::VectorXd::Zero(m);
 
         /* Construct a callback data. */
         callback_data_t cd;
@@ -653,8 +639,8 @@ namespace lbfgs
                 s_{k+1} = x_{k+1} - x_{k} = \step * d_{k}.
                 y_{k+1} = g_{k+1} - g_{k}.
                 */
-                lm[end].s = x - xp;
-                lm[end].y = g - gp;
+                lm_s.col(end) = x - xp;
+                lm_y.col(end) = g - gp;
 
                 /*
                 Compute scalars ys and yy:
@@ -662,9 +648,9 @@ namespace lbfgs
                 yy = y^t \cdot y.
                 Notice that yy is used for scaling the hessian matrix H_0 (Cholesky factor).
                 */
-                ys = lm[end].y.dot(lm[end].s);
-                yy = lm[end].y.squaredNorm();
-                lm[end].ys = ys;
+                ys = lm_y.col(end).dot(lm_s.col(end));
+                yy = lm_y.col(end).squaredNorm();
+                lm_ys(end) = ys;
 
                 /* Compute the negative of gradients. */
                 d = -g;
@@ -681,7 +667,7 @@ namespace lbfgs
                 the BFGS method for nonconvex unconstrained optimization problems. 
                 SIAM Journal on Optimization, Vol 11, No 4, pp. 1054-1064, 2011.
                 */
-                cau = lm[end].s.squaredNorm() * gp.norm() * param.cautious_factor;
+                cau = lm_s.col(end).squaredNorm() * gp.norm() * param.cautious_factor;
 
                 if (ys > cau)
                 {
@@ -702,9 +688,9 @@ namespace lbfgs
                     {
                         j = (j + m - 1) % m; /* if (--j == -1) j = m-1; */
                         /* \alpha_{j} = \rho_{j} s^{t}_{j} \cdot q_{k+1}. */
-                        lm[j].alpha = lm[j].s.dot(d) / lm[j].ys;
+                        lm_alpha(j) = lm_s.col(j).dot(d) / lm_ys(j);
                         /* q_{i} = q_{i+1} - \alpha_{i} y_{i}. */
-                        d += (-lm[j].alpha) * lm[j].y;
+                        d += (-lm_alpha(j)) * lm_y.col(j);
                     }
 
                     d *= ys / yy;
@@ -712,9 +698,9 @@ namespace lbfgs
                     for (i = 0; i < bound; ++i)
                     {
                         /* \beta_{j} = \rho_{j} y^t_{j} \cdot \gamm_{i}. */
-                        beta = lm[j].y.dot(d) / lm[j].ys;
+                        beta = lm_y.col(j).dot(d) / lm_ys(j);
                         /* \gamm_{i+1} = \gamm_{i} + (\alpha_{j} - \beta_{j}) s_{j}. */
-                        d += (lm[j].alpha - beta) * lm[j].s;
+                        d += (lm_alpha(j) - beta) * lm_s.col(j);
                         j = (j + 1) % m; /* if (++j == m) j = 0; */
                     }
                 }
