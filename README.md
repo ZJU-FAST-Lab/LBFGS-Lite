@@ -1,5 +1,5 @@
 # LBFGS-Lite
-A header-only LBFGS unconstrained optimizer.
+A header-only L-BFGS unconstrained optimizer.
 
 ## 0. About
 
