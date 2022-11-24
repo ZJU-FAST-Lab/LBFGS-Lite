@@ -532,7 +532,7 @@ namespace lbfgs
         gnorm_inf = g.cwiseAbs().maxCoeff();
         xnorm_inf = x.cwiseAbs().maxCoeff();
 
-        if (gnorm_inf / std::max(1.0, xnorm_inf) < param.g_epsilon)
+        if (gnorm_inf / std::max(1.0, xnorm_inf) <= param.g_epsilon)
         {
             /* The initial guess is already a stationary point. */
             ret = LBFGS_CONVERGENCE;
@@ -554,7 +554,7 @@ namespace lbfgs
                 xp = x;
                 gp = g;
 
-                /* If the step bound can be provied dynamically, then apply it. */
+                /* If the step bound can be provided dynamically, then apply it. */
                 step_min = param.min_step;
                 step_max = param.max_step;
                 if (cd.proc_stepbound)
