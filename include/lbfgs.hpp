@@ -561,8 +561,8 @@ namespace lbfgs
                 {
                     step_max = cd.proc_stepbound(cd.instance, xp, d);
                     step_max = step_max < param.max_step ? step_max : param.max_step;
-                    step = step < step_max ? step : 0.5 * step_max;
                 }
+                step = step < step_max ? step : 0.5 * step_max;
 
                 /* Search for an optimal step. */
                 ls = line_search_lewisoverton(x, fx, g, step, d, xp, gp, step_min, step_max, cd, param);
